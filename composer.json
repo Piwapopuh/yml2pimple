@@ -1,12 +1,12 @@
 {
-    "name": "gonzalo123/yaml2pimple",
+    "name": "td7650/yaml2pimple",
     "keywords": ["pimple", "dependency injection", "container"],
     "description": "Build a Pimple/Container from a config file",
     "license":"MIT",
     "authors": [
         {
-            "name": "Gonzalo Ayuso",
-            "email": "gonzalo123@gmail.com"
+            "name": "Thomas Dräger",
+            "email": "td7650@gmx.de"
         }
     ],
     "autoload": {
@@ -17,7 +17,8 @@
     "require": {
         "pimple/pimple": "3.0.*@dev",
         "symfony/config": "2.6.*@dev",
-        "symfony/yaml": "2.6.*@dev"
+        "symfony/yaml": "2.6.*@dev",
+		"ocramius/proxy-manager": "1.0.*"
     },
     "config": {
         "bin-dir": "bin/"

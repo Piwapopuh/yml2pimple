@@ -125,6 +125,17 @@ class YamlFileLoader extends Loader
             $definition->setArguments($this->resolveServices($service['arguments']));
         }
 
+        if (isset($service['calls'])) {
+			foreach((array)$service['calls'] as $call)
+			{
+				$definition->addCall($call);
+			}
+        }		
+
+		if (isset($service['configurator'])) {
+			$definition->addConfigurator($service['configurator']);
+        }	
+		
         $this->container['services'][$id] = $definition;
     }
 

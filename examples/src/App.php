@@ -11,6 +11,12 @@ class App
         $this->name  = $name;
     }
 
+	public function setName($name)
+	{
+		$this->name = $name;
+		return $this;
+	}
+	
     public function hello()
     {
         return $this->proxy->hello($this->name);

@@ -5,8 +5,16 @@ services:
   App:
     class:     App
     arguments: [@Proxy, %name%]
+    calls:
+        - [setName, ['Yolo']]
+    configurator: ['@Configurator', configure]
+    
   Proxy:
     class:     Proxy
     arguments: [@Curl]
+    
   Curl:
     class:     Curl
+
+  Configurator:
+    class:     Test
