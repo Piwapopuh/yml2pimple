@@ -1,4 +1,5 @@
 parameters:
+  app_class: App
   name: Gonzalo
   deep:
     second: [1,2,3]
@@ -6,24 +7,35 @@ parameters:
 
 services:
   App:
-    class:     App
+    # class names can reference parameters
+    class: %app_class%
+    # prototype returns a new instance each time
     scope: prototype
+    # the instance is constructed lazy
     lazy: true
     arguments: [@Proxy, %name%]
     calls:
         - [setName, ['Yolo']]
+        # this is a optional parameter
+        - [setDummy, ['@?Dummy']]
+    # a configurator can modify the instance
     configurator: ['@Configurator', configure]
-    tags: [{ name: konfigurator.node }]
 
     
   Proxy:
-    class:     Proxy
+    class: Proxy
     lazy: true
-    arguments: [@Curl]
+    # the instance is created by the factory class
+    factory: ['Factory', 'create']
+    arguments: [@service_container]
+    #arguments: [@Curl]
     
   Curl:
     class:     Curl
-    lazy: true
+    lazy:  true
 
   Configurator:
     class:     Test
+
+  Factory:
+    class: Factory

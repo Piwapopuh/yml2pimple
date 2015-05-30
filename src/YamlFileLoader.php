@@ -117,6 +117,10 @@ class YamlFileLoader extends Loader
     {
         $definition = new Definition();
 
+        if (isset($service['synthetic'])) {
+            $definition->setSynthetic($service['synthetic']);
+        }			
+		
         if (isset($service['class'])) {
             $definition->setClass($service['class']);
         }
@@ -143,6 +147,10 @@ class YamlFileLoader extends Loader
 		if (isset($service['configurator'])) {
 			$definition->addConfigurator($service['configurator']);
         }	
+		
+        if (isset($service['factory'])) {
+            $definition->setFactory($service['factory']);
+        }		
 		
         $this->container['services'][$id] = $definition;
     }

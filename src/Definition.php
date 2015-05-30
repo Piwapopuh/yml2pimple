@@ -16,12 +16,18 @@ class Definition
 	
 	protected $lazy;
 	
+	protected $synthetic;
+	
+	protected $factory;
+	
 	public function __construct()
 	{
 		$this->calls = array();
 		$this->configurators = array();
 		$this->scope = 'container';
 		$this->lazy = false;
+		$this->synthetic = false;
+		$this->factory = false;
 	}
 	
     public function setClass($class)
@@ -95,4 +101,33 @@ class Definition
 	{
 		return $this->lazy;
 	}
+	
+	public function setSynthetic($synthetic)
+	{
+		$this->synthetic = $synthetic;
+		
+		return $this;
+	}
+	
+	public function isSynthetic()
+	{
+		return $this->synthetic;
+	}	
+	
+    public function setFactory($factory)
+    {
+        $this->factory = $factory;
+
+        return $this;
+    }
+
+    public function getFactory()
+    {
+        return $this->factory;
+    }	
+	
+    public function hasFactory()
+    {
+        return !empty($this->factory);
+    }	
 }
