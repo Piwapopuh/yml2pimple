@@ -25,7 +25,7 @@ class ContainerBuilder
 		$this->conf = $conf;
 				
         foreach ($conf['parameters'] as $parameterName => $parameterValue) {
-            $this->container[$parameterName] = $parameterValue;
+            $this->container[$parameterName] = $this->decodeArgument($conf['parameters'], $parameterValue);
         }	
 		
         foreach ($conf['services'] as $serviceName => $serviceConf)
