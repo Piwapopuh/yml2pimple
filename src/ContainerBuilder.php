@@ -97,7 +97,7 @@ class ContainerBuilder
 				* new instance of it. If you want the same instance to be returned
 				* for all calls, wrap your anonymous function with the share() method
 				**/
-				if ( "prototype" == $serviceConf->getScope() )
+				if ( "container" == $serviceConf->getScope() )
 				{
 					$instantiator = $this->container->share( $instantiator );
 				}
@@ -109,7 +109,14 @@ class ContainerBuilder
 
     private function decodeArgument($container, $value)
     {
-        if (is_string($value)) {
+        if(is_array($value)) {
+			$res = array();
+			foreach($value as $k => $v) {
+				$res[$k] = $this->decodeArgument($container, $v);
+			}
+			return $res;
+		}
+		elseif (is_string($value)) {
 			// argument references a service
             if (0 === strpos($value, '@')) {
 				
