@@ -31,9 +31,9 @@ class ContainerBuilder
         foreach ($conf['services'] as $serviceName => $serviceConf)
 		{
 			// the classname can be a parameter reference
-			$className = $serviceConf->getClass();				
+			$className = $serviceConf->getClass();			
 			$className = $this->decodeArgument($this->container, $className);
-			
+
 			if ($serviceConf->isSynthetic()) 
 			{	
 				// we dont know how to create a synthetic service, its set later
@@ -151,8 +151,12 @@ class ContainerBuilder
 				
 				if ($definition->isLazy() && !is_null($this->factory))
 				{
+					// the classname can be a parameter reference
+					$className = $definition->getClass();			
+					$className = $this->decodeArgument($container, $className);
+
 					// service is lazy initialized, create a proxy
-					return $this->createProxy( $definition->getClass(), function() use ($container, $value) {
+					return $this->createProxy( $className, function() use ($container, $value) {
 						return $container[$value];
 					});
 				} else {
