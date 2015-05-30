@@ -8,6 +8,7 @@ services:
   App:
     class:     App
     scope: prototype
+    lazy: true
     arguments: [@Proxy, %name%]
     calls:
         - [setName, ['Yolo']]
@@ -17,10 +18,12 @@ services:
     
   Proxy:
     class:     Proxy
+    lazy: true
     arguments: [@Curl]
     
   Curl:
     class:     Curl
+    lazy: true
 
   Configurator:
     class:     Test

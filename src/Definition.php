@@ -14,11 +14,14 @@ class Definition
 
 	protected $scope;
 	
+	protected $lazy;
+	
 	public function __construct()
 	{
 		$this->calls = array();
 		$this->configurators = array();
 		$this->scope = 'container';
+		$this->lazy = false;
 	}
 	
     public function setClass($class)
@@ -79,5 +82,17 @@ class Definition
 	public function getScope()
 	{
 		return $this->scope;
+	}
+	
+	public function setLazy($lazy)
+	{
+		$this->lazy = $lazy;
+		
+		return $this;
+	}
+	
+	public function isLazy()
+	{
+		return $this->lazy;
 	}
 }

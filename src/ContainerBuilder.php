@@ -22,37 +22,50 @@ class ContainerBuilder
 		
         foreach ($conf['parameters'] as $parameterName => $parameterValue) {
             $this->container[$parameterName] = $parameterValue;
-        }
+        }	
 		
         foreach ($conf['services'] as $serviceName => $serviceConf) {
 			// the instantiator closure function			
-			$instantiator = function () use ($serviceConf, $serviceName) {
-				echo "creating new $serviceName <br>";
-                $class = new \ReflectionClass($serviceConf->getClass());
+			$instantiator = function ($c) use ($serviceConf, $serviceName) {
+
+				$class = new \ReflectionClass($serviceConf->getClass());
 				$params = [];
 				foreach ((array)$serviceConf->getArguments() as $argument) {
-                    $params[] = $p = $this->decodeArgument($argument);
-                }
+					$params[] = $p = $this->decodeArgument($c, $argument);
+				}
+				
 				// create the instance
-                $instance = $class->newInstanceArgs($params);
+				$instance = $class->newInstanceArgs($params);
+				
 				// add some method calls
 				foreach ((array)$serviceConf->getCalls() as $call) {
 					list($method, $arguments) = $call;
-                    $params = array();
+					$params = array();
 					foreach((array)$arguments as $argument) {
-						$params[] = $this->decodeArgument($argument);
+						$params[] = $this->decodeArgument($c, $argument);
 					}
 					call_user_func_array(array($instance, $method), $params);
-                }
+				}
+				
 				// let another object modify this instance
 				foreach ((array)$serviceConf->getConfigurators() as $config) {
 					list($serviceName, $method) = $config;
-					call_user_func_array(array($this->decodeArgument($serviceName), $method), array($instance));
-                }
+					call_user_func_array(array($this->decodeArgument($c, $serviceName), $method), array($instance));
+				}
 
 				
 				return $instance;				
-            };			
+			};
+			
+			// create a lazy proxy
+			if ($serviceConf->isLazy())
+			{
+				$instantiator = function ($c) use ($serviceConf, $serviceName, $instantiator) {
+					return $this->createProxy( $serviceConf->getClass(), function() use ($c, $serviceConf, $serviceName, $instantiator) {
+						return $instantiator($c);
+					});
+				};					
+			}
 			
 			/**
 			* By default, each time you get a service, Pimple v1.x returns a
@@ -68,31 +81,36 @@ class ContainerBuilder
         }
     }
 
-    private function decodeArgument($value)
+    private function decodeArgument($container, $value)
     {
         if (is_string($value)) {
             if (0 === strpos($value, '@')) {
-				// create the instantiator closure
-                $realInstantiator = function() use ($value) {
-					return $this->container[substr($value, 1)];
-				};
 				// get the definition
-				$definition = $this->conf['services'][substr($value, 1)];
-				// create the lazy proxy
-				$value = $this->factory->createProxy(
-					$definition->getClass(),
-					function (&$wrappedInstance, LazyLoadingInterface $proxy) use ($realInstantiator) {
-						$wrappedInstance = call_user_func($realInstantiator);
-						$proxy->setProxyInitializer(null);
-						return true;
-					}
-				);				
-				
+				$definition = $this->conf['services'][substr($value, 1)];				
+				if ($definition->isLazy())
+				{
+					$value = $this->createProxy( $definition->getClass(), function() use ($container, $value) {
+						return $container[substr($value, 1)];
+					});
+				} else {
+					$value = $container[substr($value, 1)];			
+				}
             } elseif (0 === strpos($value, '%')) {
-                $value = $this->container[substr($value, 1, -1)];
+                $value = $container[substr($value, 1, -1)];
             }
         }
 
         return $value;
     }
+	
+	private function createProxy($class, $callback)
+	{
+		return $this->factory->createProxy($class,
+			function (&$wrappedInstance, LazyLoadingInterface $proxy) use ($callback) {
+				$wrappedInstance = call_user_func($callback);
+				$proxy->setProxyInitializer(null);
+				return true;
+			}
+		);		
+	}
 }
