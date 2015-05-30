@@ -2,7 +2,6 @@
 
 namespace G\Yaml2Pimple;
 
-use Pimple\Container;
 use ProxyManager\Proxy\LazyLoadingInterface;
 
 class ContainerBuilder
@@ -11,7 +10,7 @@ class ContainerBuilder
 	private $factory;
 	private $conf;
 	
-    public function __construct(Container $container, $factory)
+    public function __construct(\Pimple $container, $factory)
     {
 		$this->factory = $factory;
         $this->container = $container;
@@ -26,7 +25,9 @@ class ContainerBuilder
         }
 		
         foreach ($conf['services'] as $serviceName => $serviceConf) {
-            $this->container[$serviceName] = function () use ($serviceConf, $serviceName) {
+			// the instantiator closure function			
+			$instantiator = function () use ($serviceConf, $serviceName) {
+				echo "creating new $serviceName <br>";
                 $class = new \ReflectionClass($serviceConf->getClass());
 				$params = [];
 				foreach ((array)$serviceConf->getArguments() as $argument) {
@@ -51,7 +52,19 @@ class ContainerBuilder
 
 				
 				return $instance;				
-            };
+            };			
+			
+			/**
+			* By default, each time you get a service, Pimple v1.x returns a
+			* new instance of it. If you want the same instance to be returned
+			* for all calls, wrap your anonymous function with the share() method
+			**/
+			if ( "prototype" == $serviceConf->getScope() )
+			{
+				$instantiator = $this->container->share( $instantiator );
+			}
+			
+            $this->container[$serviceName] = $instantiator;
         }
     }
 

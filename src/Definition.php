@@ -12,6 +12,15 @@ class Definition
 	
 	protected $configurators;
 
+	protected $scope;
+	
+	public function __construct()
+	{
+		$this->calls = array();
+		$this->configurators = array();
+		$this->scope = 'container';
+	}
+	
     public function setClass($class)
     {
         $this->class = $class;
@@ -38,10 +47,6 @@ class Definition
 	
 	public function addCall(array $call)
 	{
-		if(!is_array($this->calls))
-		{
-			$this->calls = array();
-		}
 		$this->calls[] = $call;
 		
 		return $this;
@@ -54,10 +59,6 @@ class Definition
 	
 	public function addConfigurator($config)
 	{
-		if(!is_array($this->configurators))
-		{
-			$this->configurators = array();
-		}
 		$this->configurators[] = $config;
 		
 		return $this;		
@@ -66,5 +67,17 @@ class Definition
 	public function getConfigurators()
 	{
 		return $this->configurators;
+	}
+	
+	public function setScope($scope)
+	{
+		$this->scope = $scope;
+		
+		return $this;
+	}
+	
+	public function getScope()
+	{
+		return $this->scope;
 	}
 }

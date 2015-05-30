@@ -120,6 +120,10 @@ class YamlFileLoader extends Loader
         if (isset($service['class'])) {
             $definition->setClass($service['class']);
         }
+		
+        if (isset($service['scope'])) {
+            $definition->setScope($service['scope']);
+        }
 
         if (isset($service['arguments'])) {
             $definition->setArguments($this->resolveServices($service['arguments']));

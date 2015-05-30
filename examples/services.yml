@@ -1,13 +1,19 @@
 parameters:
   name: Gonzalo
+  deep:
+    second: [1,2,3]
+    third: [a,b,c]
 
 services:
   App:
     class:     App
+    scope: prototype
     arguments: [@Proxy, %name%]
     calls:
         - [setName, ['Yolo']]
     configurator: ['@Configurator', configure]
+    tags: [{ name: konfigurator.node }]
+
     
   Proxy:
     class:     Proxy
