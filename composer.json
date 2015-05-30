@@ -1,5 +1,5 @@
 {
-    "name": "td7650/yaml2pimple",
+    "name": "td7650/yml2pimple",
     "keywords": ["pimple", "dependency injection", "container"],
     "description": "Build a Pimple/Container from a config file",
     "license":"MIT",
@@ -27,10 +27,5 @@
     },
     "config": {
         "bin-dir": "bin/"
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "1.0-dev"
-        }
     }
 }
