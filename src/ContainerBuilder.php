@@ -61,10 +61,10 @@ class ContainerBuilder
 						$instance = $class->newInstanceArgs($params);						
 					}
 
-					
 					// add some method calls
 					foreach ((array)$serviceConf->getCalls() as $call) {
 						list($method, $arguments) = $call;
+						
 						$params = array();
 						foreach((array)$arguments as $argument) {
 							$params[] = $this->decodeArgument($c, $argument);
@@ -108,7 +108,7 @@ class ContainerBuilder
     }
 
     private function decodeArgument($container, $value)
-    {
+    {		
         if(is_array($value)) {
 			$res = array();
 			foreach($value as $k => $v) {
@@ -141,10 +141,6 @@ class ContainerBuilder
 					} else {
 						throw new \Exception('undefined service ' . $value);
 					}
-				}
-				if (!isset($this->conf['services'][$value]))
-				{
-					throw new \Exception('no definition for ' . $value);
 				}
 				return $container[$value];			
             } elseif (false !== strpos($value, '%')) {
