@@ -147,12 +147,54 @@ class ContainerBuilder
 					throw new \Exception('no definition for ' . $value);
 				}
 				return $container[$value];			
-            } elseif (0 === strpos($value, '%')) {
-                return $container[substr($value, 1, -1)];
+            } elseif (false !== strpos($value, '%')) {
+                return $this->resolveString($container, $value);
             }
         }
 
         return $value;
+    }
+	
+    public function resolveString($container, $value, array $resolving = array())
+    {
+        // we do this to deal with non string values (Boolean, integer, ...)
+        // as the preg_replace_callback throw an exception when trying
+        // a non-string in a parameter value
+        if (preg_match('/^%([^%\s]+)%$/', $value, $match)) {
+            $key = strtolower($match[1]);
+
+            if (isset($resolving[$key])) {
+                throw new \Exception('circular reference error in resolveString');
+            }
+
+            $resolving[$key] = true;
+
+            return $container[$key];
+        }		
+        $self = $this;
+
+        return preg_replace_callback('/%%|%([^%\s]+)%/', function ($match) use ($self, $resolving, $value, $container) {
+            // skip %%
+            if (!isset($match[1])) {
+                return '%%';
+            }
+
+            $key = strtolower($match[1]);
+            if (isset($resolving[$key])) {
+                throw new \Exception('circular reference error in resolveString');
+            }
+
+            $resolved = $container[$key];
+
+            if (!is_string($resolved) && !is_numeric($resolved)) {
+                throw new \Exception(sprintf('A string value must be composed of strings and/or numbers, but found parameter "%s" of type %s inside string value "%s".', $key, gettype($resolved), $value));
+            }
+
+            $resolved = (string) $resolved;
+            $resolving[$key] = true;
+
+            return $self->resolveString($container, $resolved, $resolving);
+        }, $value);
     }
 	
 	private function createProxy($class, $callback)
