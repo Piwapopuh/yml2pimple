@@ -4,50 +4,53 @@ Pimple/Container builder
 ======
 [![Build Status](https://travis-ci.org/gonzalo123/yml2pimple.svg?branch=master)](https://travis-ci.org/gonzalo123/yml2pimple)
 
-Simple tool build pimple containers from a configuration file
-
-
-Imagine this simple application:
-
-```php
-use Pimple\Container;
-
-$container         = new Container();
-$container['name'] = 'Gonzalo';
-
-$container['Curl']  = function () {
-    return new Curl();
-};
-$container['Proxy'] = function ($c) {
-    return new Proxy($c['Curl']);
-};
-
-$container['App'] = function ($c) {
-    return new App($c['Proxy'], $c['name']);
-};
-
-$app = $container['App'];
-echo $app->hello();
-```
-
-We define the dependencies with code. But we want to define dependencies using a yml file for example:
+With this library we can create a pimple /silex container from this yaml file (mostly similar syntax than Symfony's Dependency Injection Container)
 
 ```
 parameters:
+  app_class: App
   name: Gonzalo
+  deep:
+    second: [1,2,3]
+    third: [a,b,c]
 
 services:
   App:
-    class:     App
+    # class names can reference parameters
+    class: %app_class%
+    # prototype returns a new instance each time
+    scope: prototype
+    # the instance is constructed lazy
+    lazy: true
     arguments: [@Proxy, %name%]
+    calls:
+        - [setName, ['Test']]
+        # this is a optional parameter
+        - [setDummy, ['@?Dummy']]
+    # a configurator can modify the instance
+    configurator: ['@Configurator', configure]
+
+    
   Proxy:
-    class:     Proxy
-    arguments: [@Curl]
+    class: Proxy
+    lazy: true
+    # the instance is created by the factory class
+    factory: ['Factory', 'create']
+    arguments: [@service_container]
+    #arguments: [@Curl]
+    
   Curl:
     class:     Curl
+    lazy:  true
+
+  Configurator:
+    class:     Test
+
+  Factory:
+    class: Factory
 ```
 
-With this library we can create a pimple container from this yaml file (similar syntax than Symfony's Dependency Injection Container)
+
 
 ```php
 use Pimple\Container;

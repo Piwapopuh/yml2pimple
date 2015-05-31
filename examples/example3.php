@@ -41,7 +41,10 @@ $builder->setFactory(new LazyLoadingValueHolderFactory($config));
 $loader = new YamlFileLoader($builder, new FileLocator(__DIR__));
 $loader->load('services.yml');
 
+
+
 $app = $container['App'];
+
 echo $app->hello();
 
 var_dump($app);

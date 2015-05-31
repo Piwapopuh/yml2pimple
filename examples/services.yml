@@ -15,7 +15,7 @@ services:
     lazy: true
     arguments: [@Proxy, %name%]
     calls:
-        - [setName, ['Yolo']]
+        - [setName, ['Test']]
         # this is a optional parameter
         - [setDummy, ['@?Dummy']]
     # a configurator can modify the instance

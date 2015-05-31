@@ -146,22 +146,7 @@ class ContainerBuilder
 				{
 					throw new \Exception('no definition for ' . $value);
 				}
-				// get the definition
-				$definition = $this->conf['services'][$value];				
-				
-				if ($definition->isLazy() && !is_null($this->factory))
-				{
-					// the classname can be a parameter reference
-					$className = $definition->getClass();			
-					$className = $this->decodeArgument($container, $className);
-
-					// service is lazy initialized, create a proxy
-					return $this->createProxy( $className, function() use ($container, $value) {
-						return $container[$value];
-					});
-				} else {
-					return $container[$value];			
-				}
+				return $container[$value];			
             } elseif (0 === strpos($value, '%')) {
                 return $container[substr($value, 1, -1)];
             }
