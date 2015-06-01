@@ -53,17 +53,33 @@ services:
 
 
 ```php
-use Pimple\Container;
 use G\Yaml2Pimple\ContainerBuilder;
 use G\Yaml2Pimple\YamlFileLoader;
 use Symfony\Component\Config\FileLocator;
+use ProxyManager\Factory\LazyLoadingValueHolderFactory;
 
-$container = new Container();
+// set a proxy cache for performance tuning
+$config = new \ProxyManager\Configuration();
+$config->setProxiesTargetDir(__DIR__ . '/cache/');
 
+// then register the autoloader
+spl_autoload_register($config->getProxyAutoloader());
+
+$container = new \Pimple();
 $builder = new ContainerBuilder($container);
-$locator = new FileLocator(__DIR__);
-$loader = new YamlFileLoader($builder, $locator);
+// lazy loading proxy manager factory
+$builder->setFactory(new LazyLoadingValueHolderFactory($config));
+$loader = new YamlFileLoader($builder, new FileLocator(__DIR__));
 $loader->load('services.yml');
+
+class Factory
+{
+	public function create($container = null)
+	{
+		echo "creating Proxy in Factory";
+		return new Proxy($container['Curl']);
+	}
+}
 
 $app = $container['App'];
 echo $app->hello();

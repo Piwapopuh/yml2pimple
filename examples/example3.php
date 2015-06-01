@@ -37,11 +37,19 @@ spl_autoload_register($config->getProxyAutoloader());
 
 $container = new \Pimple();
 $builder = new ContainerBuilder($container);
+// lazy loading proxy manager factory
 $builder->setFactory(new LazyLoadingValueHolderFactory($config));
 $loader = new YamlFileLoader($builder, new FileLocator(__DIR__));
 $loader->load('services.yml');
 
-
+class Factory
+{
+	public function create($container = null)
+	{
+		echo "creating Proxy in Factory";
+		return new Proxy($container['Curl']);
+	}
+}
 
 $app = $container['App'];
 
