@@ -43,7 +43,7 @@ class ContainerBuilder
 				// the instantiator closure function			
 				$instantiator = function ($c) use ($serviceConf, $serviceName, $className) {
 					// decode the argument list
-					$params = [];
+					$params = array();
 					foreach ((array)$serviceConf->getArguments() as $argument) {
 						$params[] = $p = $this->decodeArgument($c, $argument);
 					}
