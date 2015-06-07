@@ -2,8 +2,8 @@
 
 class Test
 {
-    public function configure($class)
+    public function configure(App $class)
     {
-        $class->setName('from Config');
+        $class->setName(' from Config');
     }
 }

@@ -8,7 +8,6 @@ class ContainerBuilder
 {
     private $container;
 	private $factory;
-	private $conf;
 	
     public function __construct(\Pimple $container)
     {
@@ -22,8 +21,7 @@ class ContainerBuilder
 	
     public function buildFromArray($conf)
     {
-		$this->conf = $conf;
-				
+			
         foreach ($conf['parameters'] as $parameterName => $parameterValue) {
             $this->container[$parameterName] = $this->decodeArgument($conf['parameters'], $parameterValue);
         }	
@@ -45,7 +43,7 @@ class ContainerBuilder
 					// decode the argument list
 					$params = array();
 					foreach ((array)$serviceConf->getArguments() as $argument) {
-						$params[] = $p = $this->decodeArgument($c, $argument);
+						$params[] = $this->decodeArgument($c, $argument);
 					}
 					
 					if ($serviceConf->hasFactory())
