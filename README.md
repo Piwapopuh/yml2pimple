@@ -2,7 +2,8 @@
 
 Pimple/Container builder
 ======
-[![Build Status](https://travis-ci.org/gonzalo123/yml2pimple.svg?branch=master)](https://travis-ci.org/gonzalo123/yml2pimple)
+
+[![SensioLabsInsight](https://insight.sensiolabs.com/projects/e5f9f4f3-c8d6-4b08-82c9-65d044cd4f06/mini.png)](https://insight.sensiolabs.com/projects/e5f9f4f3-c8d6-4b08-82c9-65d044cd4f06)
 
 With this library we can create a pimple /silex container from this yaml file (mostly similar syntax than Symfony's Dependency Injection Container)
 
