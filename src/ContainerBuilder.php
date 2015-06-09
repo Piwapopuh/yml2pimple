@@ -3,10 +3,12 @@
 namespace G\Yaml2Pimple;
 
 use ProxyManager\Proxy\LazyLoadingInterface;
+use G\Yaml2Pimple\Normalizer\PimpleNormalizer;
 
 class ContainerBuilder
 {
     private $container;
+	private $normalizer;
 	private $factory;
 	
     public function __construct(\Pimple $container)
@@ -14,23 +16,40 @@ class ContainerBuilder
         $this->container = $container;
     }
 
+	public function setNormalizer($normalizer)
+	{
+		$this->normalizer = $normalizer;
+		
+		return $this;
+	}
+	
+	protected function addDefaultNormalizer()
+	{
+		$this->setNormalizer(new PimpleNormalizer($this->container));
+	}
+	
 	public function setFactory($factory)
 	{
 		$this->factory = $factory;	
+		
+		return $this;
 	}
 	
     public function buildFromArray($conf)
     {
+		if (is_null($this->normalizer)) {
+			$this->addDefaultNormalizer();
+		}
 			
         foreach ($conf['parameters'] as $parameterName => $parameterValue) {
-            $this->container[$parameterName] = $this->decodeArgument($conf['parameters'], $parameterValue);
+            $this->container[$parameterName] = $this->normalize($parameterValue);
         }	
 		
         foreach ($conf['services'] as $serviceName => $serviceConf)
 		{
 			// the classname can be a parameter reference
 			$className = $serviceConf->getClass();			
-			$className = $this->decodeArgument($this->container, $className);
+			$className = $this->normalize($className);
 
 			if ($serviceConf->isSynthetic()) 
 			{	
@@ -39,18 +58,18 @@ class ContainerBuilder
 			}
 			else {
 				// the instantiator closure function			
-				$instantiator = function ($c) use ($serviceConf, $serviceName, $className) {
+				$instantiator = function ($container) use ($serviceConf, $serviceName, $className) {
 					// decode the argument list
 					$params = array();
 					foreach ((array)$serviceConf->getArguments() as $argument) {
-						$params[] = $this->decodeArgument($c, $argument);
+						$params[] = $this->normalize($argument);
 					}
 					
 					if ($serviceConf->hasFactory())
 					{
 						list($factory, $method) = $serviceConf->getFactory();
-						$factory = $this->decodeArgument($c, $factory);
-						$method = $this->decodeArgument($c, $method);
+						$factory = $this->normalize($factory);
+						$method = $this->normalize($method);
 						// let the factory create the instance
 						$instance = call_user_func_array(array($factory, $method), $params);
 					} else {
@@ -65,7 +84,7 @@ class ContainerBuilder
 						
 						$params = array();
 						foreach((array)$arguments as $argument) {
-							$params[] = $this->decodeArgument($c, $argument);
+							$params[] = $this->normalize($argument);
 						}
 						call_user_func_array(array($instance, $method), $params);
 					}
@@ -73,7 +92,7 @@ class ContainerBuilder
 					// let another object modify this instance
 					foreach ((array)$serviceConf->getConfigurators() as $config) {
 						list($serviceName, $method) = $config;
-						call_user_func_array(array($this->decodeArgument($c, $serviceName), $method), array($instance));
+						call_user_func_array(array($this->normalize($serviceName), $method), array($instance));
 					}
 
 					
@@ -83,10 +102,15 @@ class ContainerBuilder
 				// create a lazy proxy
 				if ($serviceConf->isLazy() && !is_null($this->factory))
 				{
-					$instantiator = function ($c) use ($className, $instantiator) {
-						return $this->createProxy( $className, function() use ($c, $instantiator) {
-							return $instantiator($c);
-						});
+					$instantiator = function ($container) use ($className, $instantiator) {	
+						return $this->factory->createProxy($className,
+							function (&$wrappedInstance, LazyLoadingInterface $proxy) use ($instantiator) {
+									$wrappedInstance = call_user_func($instantiator);
+								$proxy->setProxyInitializer(null);
+								return true;
+							}
+						);
+						
 					};					
 				}
 				
@@ -104,101 +128,13 @@ class ContainerBuilder
 			}
         }
     }
-
-    private function decodeArgument($container, $value)
-    {		
-        if(is_array($value)) {
-			$res = array();
-			foreach($value as $k => $v) {
-				$res[$k] = $this->decodeArgument($container, $v);
-			}
-			return $res;
-		}
-		elseif (is_string($value)) {
-			// argument references a service
-            if (0 === strpos($value, '@')) {
-				
-				$can_return_null = false;
-				$value = substr($value, 1);
-				
-				// argument is optional
-				if (0 === strpos($value, '?')) {
-					$can_return_null = true;
-					$value = substr($value, 1);
-				}
-				// our "magic" reference to the container itself
-				if ("service_container" == $value) {
-					return $container;
-				}
-				
-				// check if service is defined
-				if (!isset($container[$value]))
-				{
-					if ($can_return_null) {
-						return null;
-					} else {
-						throw new \Exception('undefined service ' . $value);
-					}
-				}
-				return $container[$value];			
-            } elseif (false !== strpos($value, '%')) {
-                return $this->resolveString($container, $value);
-            }
+	
+    public function normalize($value)
+    {
+        if (is_array($value)) {
+            return array_map([$this, 'normalize'], $value);
         }
 
-        return $value;
+        return $this->normalizer->normalize($value);
     }
-	
-    public function resolveString($container, $value, array $resolving = array())
-    {
-        // we do this to deal with non string values (Boolean, integer, ...)
-        // as the preg_replace_callback throw an exception when trying
-        // a non-string in a parameter value
-        if (preg_match('/^%([^%\s]+)%$/', $value, $match)) {
-            $key = strtolower($match[1]);
-
-            if (isset($resolving[$key])) {
-                throw new \Exception('circular reference error in resolveString');
-            }
-
-            $resolving[$key] = true;
-
-            return $container[$key];
-        }		
-        $self = $this;
-
-        return preg_replace_callback('/%%|%([^%\s]+)%/', function ($match) use ($self, $resolving, $value, $container) {
-            // skip %%
-            if (!isset($match[1])) {
-                return '%%';
-            }
-
-            $key = strtolower($match[1]);
-            if (isset($resolving[$key])) {
-                throw new \Exception('circular reference error in resolveString');
-            }
-
-            $resolved = $container[$key];
-
-            if (!is_string($resolved) && !is_numeric($resolved)) {
-                throw new \Exception(sprintf('A string value must be composed of strings and/or numbers, but found parameter "%s" of type %s inside string value "%s".', $key, gettype($resolved), $value));
-            }
-
-            $resolved = (string) $resolved;
-            $resolving[$key] = true;
-
-            return $self->resolveString($container, $resolved, $resolving);
-        }, $value);
-    }
-	
-	private function createProxy($class, $callback)
-	{
-		return $this->factory->createProxy($class,
-			function (&$wrappedInstance, LazyLoadingInterface $proxy) use ($callback) {
-				$wrappedInstance = call_user_func($callback);
-				$proxy->setProxyInitializer(null);
-				return true;
-			}
-		);		
-	}
 }

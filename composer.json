@@ -23,6 +23,7 @@
         "pimple/pimple": "~1.0",
         "symfony/config": "v2.6.0",
 		"symfony/yaml": "v2.6.0",
+		"symfony/property-access": "v2.6.0",
 		"ocramius/proxy-manager": "1.0.*"
     },
     "config": {

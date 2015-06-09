@@ -2,8 +2,15 @@
 
 class Test
 {
+	protected $name;
+	
+	public function __construct($name)
+	{
+		$this->name = $name;
+	}
+	
     public function configure(App $class)
     {
-        $class->setName(' from Config');
+        $class->setName($this->name);
     }
 }

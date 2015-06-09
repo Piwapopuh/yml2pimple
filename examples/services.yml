@@ -2,8 +2,10 @@ parameters:
   app_class: App
   name: Gonzalo
   deep:
+    first: 'From the deep (%app_class%)'
     second: [1,2,3]
     third: [a,b,c]
+    
 
 services:
   App:
@@ -31,11 +33,12 @@ services:
     #arguments: [@Curl]
     
   Curl:
-    class:     Curl
+    class: Curl
     lazy:  true
 
   Configurator:
     class:     Test
+    arguments: ['%[deep][first]%']
 
   Factory:
     class: Factory

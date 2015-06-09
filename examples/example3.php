@@ -11,6 +11,9 @@ include __DIR__ . '/src/Factory.php';
 
 use G\Yaml2Pimple\ContainerBuilder;
 use G\Yaml2Pimple\YamlFileLoader;
+use G\Yaml2Pimple\Normalizer\ChainNormalizer;
+use G\Yaml2Pimple\Normalizer\PimpleNormalizer;
+use G\Yaml2Pimple\Normalizer\PropertyAccessPimpleNormalizer;
 use Symfony\Component\Config\FileLocator;
 use ProxyManager\Factory\LazyLoadingValueHolderFactory;
 
@@ -22,13 +25,23 @@ $config->setProxiesTargetDir(__DIR__ . '/cache/');
 spl_autoload_register($config->getProxyAutoloader());
 
 $container = new \Pimple();
+
+$normalizer = new ChainNormalizer( array(
+	new PimpleNormalizer($container), 
+	new PropertyAccessPimpleNormalizer($container)
+));
+
 $builder = new ContainerBuilder($container);
+// set the normalizers 
+$builder->setNormalizer($normalizer);
 // lazy loading proxy manager factory
 $builder->setFactory(new LazyLoadingValueHolderFactory($config));
+
 $loader = new YamlFileLoader($builder, new FileLocator(__DIR__));
 $loader->load('services.yml');
 
 $app = $container['App'];
+
 echo $app->hello();
 
 $app2 = $container['App'];
