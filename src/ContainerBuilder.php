@@ -10,12 +10,21 @@ class ContainerBuilder
     private $container;
 	private $normalizer;
 	private $factory;
+    private $lazy_paramters;
 	
     public function __construct(\Pimple $container)
     {
         $this->container = $container;
+        $this->lazy_paramters = false;
     }
 
+    public function setParametersLazy($bool = true)
+    {
+        $this->lazy_paramters = $bool;
+        
+        return $this;
+    }
+    
 	public function setNormalizer($normalizer)
 	{
 		$this->normalizer = $normalizer;
@@ -40,13 +49,32 @@ class ContainerBuilder
 		if (is_null($this->normalizer)) {
 			$this->addDefaultNormalizer();
 		}
-		$that = $this;	
+        
+		$that = $this;
+
         foreach ($conf['parameters'] as $parameterName => $parameterValue) {
-            $this->container[$parameterName] = $this->container->share(			
-				new LazyParameterFactory(function($c) use ($that, $parameterValue) {
-					return $that->normalize($parameterValue, $c);
-				})
-			);
+            // normalize complex parameters lazy on access or right now?
+            if ($this->lazy_paramters) {
+                // we wrap our parameter in a magic proxy class with a __invoke method which is
+                // called automatically on access by pimple. this way we have a chance to access
+                // parameters as references which could be set later
+                // the value is evaluated on every access
+                $value = new LazyParameterFactory(function($c) use ($that, $parameterValue) {
+                    return $that->normalize($parameterValue, $c);
+                });                    
+                // freeze our value on first access (as singleton)
+                if (0 === strpos($parameterName, '$')) { 
+                    $value = $this->container->share($value);
+                    $parameterName = substr($parameterName, 1);
+                }
+            } else {
+                // without lazy loading we ignore the optional first '$' char
+                if (0 === strpos($parameterName, '$')) {
+                    $parameterName = substr($parameterName, 1);
+                }
+                $value = $that->normalize($parameterValue, $c);
+            }
+            $this->container[$parameterName] = $value;			
         }	
 		
         foreach ($conf['services'] as $serviceName => $serviceConf)
