@@ -40,11 +40,11 @@ class ContainerBuilder
 		if (is_null($this->normalizer)) {
 			$this->addDefaultNormalizer();
 		}
-			
+		$that = $this;	
         foreach ($conf['parameters'] as $parameterName => $parameterValue) {
             $this->container[$parameterName] = $this->container->share(			
-				new LazyParameterFactory(function($c) use ($parameterValue) {
-					return $this->normalize($parameterValue, $c);
+				new LazyParameterFactory(function($c) use ($that, $parameterValue) {
+					return $that->normalize($parameterValue, $c);
 				})
 			);
         }	
