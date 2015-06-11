@@ -42,14 +42,18 @@ class ContainerBuilder
 		}
 			
         foreach ($conf['parameters'] as $parameterName => $parameterValue) {
-            $this->container[$parameterName] = $this->normalize($parameterValue);
+            $this->container[$parameterName] = $this->container->share(			
+				new LazyParameterFactory(function($c) use ($parameterValue) {
+					return $this->normalize($parameterValue, $c);
+				})
+			);
         }	
 		
         foreach ($conf['services'] as $serviceName => $serviceConf)
 		{
 			// the classname can be a parameter reference
 			$className = $serviceConf->getClass();			
-			$className = $this->normalize($className);
+			$className = $this->normalize($className, $this->container);
 
 			if ($serviceConf->isSynthetic()) 
 			{	
@@ -62,14 +66,14 @@ class ContainerBuilder
 					// decode the argument list
 					$params = array();
 					foreach ((array)$serviceConf->getArguments() as $argument) {
-						$params[] = $this->normalize($argument);
+						$params[] = $this->normalize($argument, $container);
 					}
 					
 					if ($serviceConf->hasFactory())
 					{
 						list($factory, $method) = $serviceConf->getFactory();
-						$factory = $this->normalize($factory);
-						$method = $this->normalize($method);
+						$factory = $this->normalize($factory, $container);
+						$method = $this->normalize($method, $container);
 						// let the factory create the instance
 						$instance = call_user_func_array(array($factory, $method), $params);
 					} else {
@@ -84,7 +88,7 @@ class ContainerBuilder
 						
 						$params = array();
 						foreach((array)$arguments as $argument) {
-							$params[] = $this->normalize($argument);
+							$params[] = $this->normalize($argument, $container);
 						}
 						call_user_func_array(array($instance, $method), $params);
 					}
@@ -92,7 +96,7 @@ class ContainerBuilder
 					// let another object modify this instance
 					foreach ((array)$serviceConf->getConfigurators() as $config) {
 						list($serviceName, $method) = $config;
-						call_user_func_array(array($this->normalize($serviceName), $method), array($instance));
+						call_user_func_array(array($this->normalize($serviceName, $container), $method), array($instance));
 					}
 
 					
@@ -129,12 +133,15 @@ class ContainerBuilder
         }
     }
 	
-    public function normalize($value)
+    public function normalize($value, $container)
     {
         if (is_array($value)) {
-            return array_map([$this, 'normalize'], $value);
+            foreach($value as $k => $v) {
+				$value[$k] = $this->normalize($v, $container);
+			}
+			return $value;
         }
 
-        return $this->normalizer->normalize($value);
+        return $this->normalizer->normalize($value, $container);
     }
 }

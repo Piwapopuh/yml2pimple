@@ -25,10 +25,10 @@ class ChainNormalizer
     /**
      * {@inheritDoc}
      */
-    public function normalize($value)
+    public function normalize($value, $container)
     {
         foreach ($this->normalizers as $normalizer) {
-            $value = $normalizer->normalize($value);
+            $value = $normalizer->normalize($value, $container);
         }
 
         return $value;

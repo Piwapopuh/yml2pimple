@@ -14,7 +14,7 @@ class PimpleNormalizer
         $this->container = $container;
     }
 	
-    public function normalize($value)
+    public function normalize($value, $container)
     {	
 		if (!is_string($value)) {
 			return $value;
@@ -33,11 +33,11 @@ class PimpleNormalizer
 			}
 			// our "magic" reference to the container itself
 			if ("service_container" == $value) {
-				return $this->container;
+				return $container;
 			}
 			
 			// check if service is defined
-			if (!isset($this->container[$value]))
+			if (!isset($container[$value]))
 			{
 				if ($can_return_null) {
 					return null;
@@ -45,15 +45,24 @@ class PimpleNormalizer
 					throw new \Exception('undefined service ' . $value);
 				}
 			}
-			return $this->container[$value];			
+			return $container[$value];			
 		}
 		
         if (preg_match('{^%([a-z0-9_.]+)%$}', $value, $match)) {
 			$key = strtolower($match[1]);
-            return isset($this->container[$key]) ? $this->container[$key] : $match[0];
+            return isset($container[$key]) ? $container[$key] : $match[0];
         }
 
-        $result = preg_replace_callback('{%%|%([a-z0-9_.]+)%}', [$this, 'callback'], $value, -1, $count);
+		$callback = function ($matches) use ($container)
+		{
+			if (!isset($matches[1])) {
+				return '%%';
+			}
+
+			return isset($container[$matches[1]]) ? $container[$matches[1]] : $matches[0];
+		};
+		
+		$result = preg_replace_callback('{%%|%([a-z0-9_.]+)%}', array($this, $callback), $value, -1, $count);
 
         return $count ? $result : $value;		
     }
