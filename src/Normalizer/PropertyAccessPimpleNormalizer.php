@@ -50,7 +50,7 @@ class PropertyAccessPimpleNormalizer
 			return $matches[0];
 		};		
 		
-        $result = preg_replace_callback('{%%|%([a-zA-Z0-9_.\[\]]+)%}', array($this, $callback), $value, -1, $count);
+        $result = preg_replace_callback('{%%|%([a-zA-Z0-9_.\[\]]+)%}', $callback, $value, -1, $count);
 
         return $count ? $result : $value;
     }
