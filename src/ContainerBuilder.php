@@ -127,7 +127,6 @@ class ContainerBuilder
 						call_user_func_array(array($that->normalize($serviceName, $container), $method), array($instance));
 					}
 
-					
 					return $instance;				
 				};
 				
@@ -136,8 +135,8 @@ class ContainerBuilder
 				{
 					$instantiator = function ($container) use ($className, $instantiator) {	
 						return $this->factory->createProxy($className,
-							function (&$wrappedInstance, LazyLoadingInterface $proxy) use ($instantiator) {
-									$wrappedInstance = call_user_func($instantiator);
+							function (&$wrappedInstance, LazyLoadingInterface $proxy) use ($container, $instantiator) {
+									$wrappedInstance = call_user_func($instantiator, $container);
 								$proxy->setProxyInitializer(null);
 								return true;
 							}

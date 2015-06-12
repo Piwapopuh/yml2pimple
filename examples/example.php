@@ -18,11 +18,11 @@ use Symfony\Component\Config\FileLocator;
 use ProxyManager\Factory\LazyLoadingValueHolderFactory;
 
 // set a proxy cache for performance tuning
-$config = new \ProxyManager\Configuration();
-$config->setProxiesTargetDir(__DIR__ . '/cache/');
+//$config = new \ProxyManager\Configuration();
+//$config->setProxiesTargetDir(__DIR__ . '/cache/');
 
 // then register the autoloader
-spl_autoload_register($config->getProxyAutoloader());
+//spl_autoload_register($config->getProxyAutoloader());
 
 $container = new \Pimple();
 
@@ -32,21 +32,28 @@ $normalizer = new ChainNormalizer( array(
 ));
 
 $builder = new ContainerBuilder($container);
+// load parameters lazy (try setting to false)
+$builder->setParametersLazy(true);
 // set the normalizers 
 $builder->setNormalizer($normalizer);
 // lazy loading proxy manager factory
-$builder->setFactory(new LazyLoadingValueHolderFactory($config));
+$builder->setFactory(new LazyLoadingValueHolderFactory(/*$config*/));
 
 $loader = new YamlFileLoader($builder, new FileLocator(__DIR__));
+
 $loader->load('services.yml');
+$loader->load('services2.yml');
 
 $app = $container['App'];
-
 echo $app->hello();
 
-$app2 = $container['App'];
-echo $app2->hello();
+echo $container['desc1'];
+echo $container['combined'];
+$container['fragment2'] = 'Test';
+echo $container['combined'];
 
-$app2->setName('B');
-
-echo $app->hello();
+echo $container['desc2'];
+$container['fragment2'] = 'world';
+echo $container['combined2'];
+$container['fragment2'] = 'Test';
+echo $container['combined2'];

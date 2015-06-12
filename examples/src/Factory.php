@@ -5,7 +5,7 @@ class Factory
 {
 	public function create(\Pimple $container = null)
 	{
-		echo "<br>creating class Proxy in Factory";
+		echo "<p>creating class Proxy in Factory</p>";
 		return new Proxy($container['Curl']);
 	}
 }
