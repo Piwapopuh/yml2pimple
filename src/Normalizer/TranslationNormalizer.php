@@ -28,10 +28,13 @@ class TranslationNormalizer
 
         if ('!!' == substr($value, 0, 2)) {
 			$value = substr($value, 2);
-            if (isset($container['translator'])) {
-                // todo: save id for later dumping pot file
-                $container->merge('translation.normalizer.messages', $value); 
-                return $container['translator']->trans($value);
+            if (isset($container['translation.normalizer.messages']) && isset($container['translation.normalizer.messages'][$value])) {
+                return $container['translation.normalizer.messages'][$value];
+            }
+            elseif (isset($container['translator'])) {
+                $trans = $container['translator']->trans($value);
+                $container->merge('translation.normalizer.messages', array($value => $trans)); 
+                return $trans;
             }
         }
 
