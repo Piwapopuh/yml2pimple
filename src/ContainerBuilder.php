@@ -90,18 +90,18 @@ class ContainerBuilder
 			}
 			else {
 				// the instantiator closure function			
-				$instantiator = function ($container) use ($serviceConf, $serviceName, $className) {
+				$instantiator = function ($container) use ($that, $serviceConf, $serviceName, $className) {
 					// decode the argument list
 					$params = array();
 					foreach ((array)$serviceConf->getArguments() as $argument) {
-						$params[] = $this->normalize($argument, $container);
+						$params[] = $that->normalize($argument, $container);
 					}
 					
 					if ($serviceConf->hasFactory())
 					{
 						list($factory, $method) = $serviceConf->getFactory();
-						$factory = $this->normalize($factory, $container);
-						$method = $this->normalize($method, $container);
+						$factory = $that->normalize($factory, $container);
+						$method = $that->normalize($method, $container);
 						// let the factory create the instance
 						$instance = call_user_func_array(array($factory, $method), $params);
 					} else {
@@ -116,7 +116,7 @@ class ContainerBuilder
 						
 						$params = array();
 						foreach((array)$arguments as $argument) {
-							$params[] = $this->normalize($argument, $container);
+							$params[] = $that->normalize($argument, $container);
 						}
 						call_user_func_array(array($instance, $method), $params);
 					}
@@ -124,7 +124,7 @@ class ContainerBuilder
 					// let another object modify this instance
 					foreach ((array)$serviceConf->getConfigurators() as $config) {
 						list($serviceName, $method) = $config;
-						call_user_func_array(array($this->normalize($serviceName, $container), $method), array($instance));
+						call_user_func_array(array($that->normalize($serviceName, $container), $method), array($instance));
 					}
 
 					
