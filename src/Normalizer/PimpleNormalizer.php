@@ -39,11 +39,11 @@ class PimpleNormalizer
 			return $container[$value];			
 		}
 
-        if (preg_match('{^%([a-z0-9_.]+)%$}', $value, $match)) {
+        if (preg_match('{^%([a-zA-Z0-9_.]+)%$}', $value, $match)) {
 			$key = strtolower($match[1]);
             return isset($container[$key]) ? $container[$key] : $match[0];
         }
-
+        
 		$callback = function ($matches) use ($container)
 		{
 			if (!isset($matches[1])) {
@@ -51,8 +51,7 @@ class PimpleNormalizer
 			}
 			return isset($container[$matches[1]]) ? $container[$matches[1]] : $matches[0];
 		};
-		
-		$result = preg_replace_callback('{%%|%([a-z0-9_.]+)%}', $callback, $value, -1, $count);
+		$result = preg_replace_callback('{%%|%([a-zA-Z0-9_.]+)%}', $callback, $value, -1, $count);
 
         return $count ? $result : $value;		
     }

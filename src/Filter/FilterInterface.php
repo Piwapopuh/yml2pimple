@@ -6,5 +6,5 @@ interface FilterInterface
 {
 	public function getFunc();
     
-    public function filter($container, $value, $args);
+    public function filter($container, $key, $value, $args);
 }

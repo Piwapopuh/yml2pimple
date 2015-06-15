@@ -9,14 +9,8 @@ class TranslationFilter implements FilterInterface
         return 'trans';
     }
 
-    public function filter($container, $value, $args)
+    public function filter($container, $key, $value, $args)
     {	
-        if (is_array($value)) {
-            foreach($value as $k => $v) {
-                $value[$k] = $this->filter($container, $v, $args);
-            }
-            return $value;
-        }
         if (isset($container['translation.normalizer.messages']) && isset($container['translation.normalizer.messages'][$value])) {
             return $container['translation.normalizer.messages'][$value];
         }

@@ -24,7 +24,6 @@ class ContainerBuilder
     public function addFilter(FilterInterface $filter)
     {
         $this->filters[$filter->getFunc()] = $filter;
-        
         return $this;
     }
     
@@ -43,25 +42,25 @@ class ContainerBuilder
         return $filters;
     }
     
-    public function callFilters($value, $filters, $container)
-    {
+    public function filter($key, $value, $filters, $container)
+    {  
         if (is_array($value)) {
             $res = array();
             foreach($value as $k => $v) {
                 $_filters = $this->parseFilters($k, $container);
-                $v = $this->callFilters($v, $_filters, $container);
+                $v = $this->filter($k, $v, $_filters, $container);
                 $res[$k] = $v;
             }
-            $value = $res;
-            return $value;
-        }    
+            $value = $res;    
+        }        
+        
         foreach((array)$filters as $filter) 
         {
             list($func, $args) = $filter;
             if (isset($this->filters[$func])) {
-                $value = $this->filters[$func]->filter($container, $value, $args);
+                $value = $this->filters[$func]->filter($container, $key, $value, $args);
             }
-        }
+        }         
         return $value;
     }
     
@@ -102,18 +101,21 @@ class ContainerBuilder
 		$that = $this;
 
         foreach ($conf['parameters'] as $parameterName => $parameterValue) {
+            $merge = false;
+            if (is_array($parameterValue)) {
+                $merge = true;
+            }
             // normalize complex parameters lazy on access or right now?
             if ($this->lazy_paramters) {
             
                 $filters = $this->parseFilters($parameterName, $this->container);
-            
                 // we wrap our parameter in a magic proxy class with a __invoke method which is
                 // called automatically on access by pimple. this way we have a chance to access
                 // parameters as references which could be set later
                 // the value is evaluated on every access
-                $value = new LazyParameterFactory(function($c) use ($that, $parameterValue, $filters) {
+                $value = new LazyParameterFactory(function($c) use ($that, $parameterName, $parameterValue, $filters) {
                     $parameterValue = $that->normalize($parameterValue, $c);
-                    $parameterValue = $that->callFilters($parameterValue, $filters, $c);
+                    $parameterValue = $that->filter($parameterName, $parameterValue, $filters, $c);
                     return $parameterValue;
                 });                    
                 // freeze our value on first access (as singleton)
@@ -121,17 +123,31 @@ class ContainerBuilder
                     $value = $this->container->share($value);
                     $parameterName = substr($parameterName, 1);
                 }
+                if (isset($this->container[$parameterName]) && $merge ) {
+                    $value = $this->container->extend($parameterName, function($old, $c) use ($value) {
+                        if (is_object($value) && method_exists($value, '__invoke')) {
+                            $value = $value($c);
+                        }
+                        return array_replace($old, $value);
+                    });
+                }                
             } else {
                 // without lazy loading we ignore the optional first '$' char
                 if (0 === strpos($parameterName, '$')) {
                     $parameterName = substr($parameterName, 1);
                 }
                 
-                $filters = $this->parseFilters($parameterName, $this->container);
+                $filters = $that->parseFilters($parameterName, $that->container);
                 
-                $value = $that->normalize($parameterValue, $c);
-                $value = $that->callFilters($value, $filters, $c);
+                $value = $that->normalize($parameterValue, $that->container);
+                $value = $that->filter($parameterName, $value, $filters, $that->container);
+                
+                if (isset($this->container[$parameterName]) && $merge ) {
+                    $value = array_replace($this->container[$parameterName], $value);
+                }                
+                
             }
+
             $this->container[$parameterName] = $value;			
         }	
 		
