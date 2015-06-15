@@ -45,6 +45,16 @@ class ContainerBuilder
     
     public function callFilters($value, $filters, $container)
     {
+        if (is_array($value)) {
+            $res = array();
+            foreach($value as $k => $v) {
+                $_filters = $this->parseFilters($k, $container);
+                $v = $this->callFilters($v, $_filters, $container);
+                $res[$k] = $v;
+            }
+            $value = $res;
+            return $value;
+        }    
         foreach((array)$filters as $filter) 
         {
             list($func, $args) = $filter;
@@ -95,7 +105,7 @@ class ContainerBuilder
             // normalize complex parameters lazy on access or right now?
             if ($this->lazy_paramters) {
             
-                $filters = $that->parseFilters($parameterName, $this->container);
+                $filters = $this->parseFilters($parameterName, $this->container);
             
                 // we wrap our parameter in a magic proxy class with a __invoke method which is
                 // called automatically on access by pimple. this way we have a chance to access
