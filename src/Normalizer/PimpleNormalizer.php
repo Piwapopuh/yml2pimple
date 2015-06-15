@@ -4,15 +4,6 @@ namespace G\Yaml2Pimple\Normalizer;
 
 class PimpleNormalizer
 {
-    private $container;
-
-    /**
-     * @param Pimple $pimple
-     */
-    public function __construct(\Pimple $container)
-    {
-        $this->container = $container;
-    }
 	
     public function normalize($value, $container)
     {	

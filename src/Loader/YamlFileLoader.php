@@ -1,10 +1,13 @@
 <?php
 
-namespace G\Yaml2Pimple;
+namespace G\Yaml2Pimple\Loader;
 
 use Symfony\Component\Config\FileLocatorInterface;
 use Symfony\Component\Config\Loader\Loader;
 use Symfony\Component\Yaml\Parser as YamlParser;
+
+use G\Yaml2Pimple\ContainerBuilder;
+use G\Yaml2Pimple\Definition;
 
 class YamlFileLoader extends Loader
 {
