@@ -25,6 +25,8 @@ class YamlFileLoader extends Loader
 
     public function load($file, $type=null)
     {
+        $this->container = array();
+    
         $path = $this->locator->locate($file);
 
         $content = $this->loadFile($path);
@@ -37,7 +39,7 @@ class YamlFileLoader extends Loader
 
         if (isset($content['parameters'])) {
             foreach ($content['parameters'] as $key => $value) {
-                $this->container['parameters'][$key] = $this->resolveServices($value);
+                $this->container['parameters'][$key] = $value;
             }
         }
 
@@ -137,7 +139,7 @@ class YamlFileLoader extends Loader
         }		
 		
         if (isset($service['arguments'])) {
-            $definition->setArguments($this->resolveServices($service['arguments']));
+            $definition->setArguments($service['arguments']);
         }
 
         if (isset($service['calls'])) {

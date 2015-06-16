@@ -105,9 +105,17 @@ class ContainerBuilder
             if (is_array($parameterValue)) {
                 $merge = true;
             }
-            // normalize complex parameters lazy on access or right now?
-            if ($this->lazy_paramters) {
             
+            $freeze = true;
+            // freeze our value on first access (as singleton)
+            if (0 === strpos($parameterName, '$')) { 
+                $parameterName = substr($parameterName, 1);
+                $freeze = false;
+            }
+            
+            // normalize complex parameters lazy on access or right now?
+            if ($this->lazy_paramters)
+            {            
                 $filters = $this->parseFilters($parameterName, $this->container);
                 // we wrap our parameter in a magic proxy class with a __invoke method which is
                 // called automatically on access by pimple. this way we have a chance to access
@@ -117,20 +125,24 @@ class ContainerBuilder
                     $parameterValue = $that->normalize($parameterValue, $c);
                     $parameterValue = $that->filter($parameterName, $parameterValue, $filters, $c);
                     return $parameterValue;
-                });                    
-                // freeze our value on first access (as singleton)
-                if (0 === strpos($parameterName, '$')) { 
-                    $value = $this->container->share($value);
-                    $parameterName = substr($parameterName, 1);
-                }
+                });
+                
+                // merge existing data per default
                 if (isset($this->container[$parameterName]) && $merge ) {
-                    $value = $this->container->extend($parameterName, function($old, $c) use ($value) {
+                    $value = $this->container->extend($parameterName, function($old, $c) use ($parameterName, $value) {
+                        
                         if (is_object($value) && method_exists($value, '__invoke')) {
                             $value = $value($c);
                         }
+                        
                         return array_replace($old, $value);
                     });
-                }                
+                } 
+                
+                // freeze our value on first access (as singleton) this is default
+                if ($freeze) {
+                    $value = $this->container->share($value);
+                }
             } else {
                 // without lazy loading we ignore the optional first '$' char
                 if (0 === strpos($parameterName, '$')) {
@@ -145,10 +157,8 @@ class ContainerBuilder
                 if (isset($this->container[$parameterName]) && $merge ) {
                     $value = array_replace($this->container[$parameterName], $value);
                 }                
-                
             }
-
-            $this->container[$parameterName] = $value;			
+            $this->container[$parameterName] = $value;			                
         }	
 		
         foreach ($conf['services'] as $serviceName => $serviceConf)
