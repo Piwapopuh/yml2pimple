@@ -2,9 +2,17 @@
 
 namespace G\Yaml2Pimple\Normalizer;
 
+use \Symfony\Component\PropertyAccess\PropertyAccess;
+
 class PimpleNormalizer
 {
+	protected $accessor;
 	
+    public function __construct()
+    {
+		$this->accessor = PropertyAccess::createPropertyAccessor();		
+    }	
+    
     public function normalize($value, $container)
     {	
 		if (!is_string($value)) {
@@ -40,16 +48,34 @@ class PimpleNormalizer
 		}
 
         if (preg_match('{^%([a-zA-Z0-9_.]+)%$}', $value, $match)) {
-			$key = strtolower($match[1]);
+            $key = strtolower($match[1]);
+            if (false !== strpos($key, '..')) {
+                $key = '[' . str_replace('..', '][', $key) . ']';
+                if ($this->accessor->isReadable($container, $key)) {
+                    return $this->accessor->getValue($container, $key);
+                } 
+                return $match[0];
+            }                
             return isset($container[$key]) ? $container[$key] : $match[0];
         }
         
-		$callback = function ($matches) use ($container)
+        $that = $this;
+		$callback = function ($matches) use ($that, $container)
 		{
 			if (!isset($matches[1])) {
 				return '%%';
 			}
-			return isset($container[$matches[1]]) ? $container[$matches[1]] : $matches[0];
+            
+            $key = strtolower($matches[1]);
+            
+            if (false !== strpos($key, '..')) {
+                $key = '[' . str_replace('..', '][', $key) . ']';
+                if ($that->accessor->isReadable($container, $key)) {
+                    return $that->accessor->getValue($container, $key);
+                } 
+                return $matches[0];
+            }              
+			return isset($container[$key]) ? $container[$key] : $matches[0];
 		};
 		$result = preg_replace_callback('{%%|%([a-zA-Z0-9_.]+)%}', $callback, $value, -1, $count);
 
