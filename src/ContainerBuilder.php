@@ -135,7 +135,7 @@ class ContainerBuilder
                             $value = $value($c);
                         }
                         
-                        return array_replace($old, $value);
+                        return array_replace_recursive($old, $value);
                     });
                 } 
                 
@@ -155,7 +155,7 @@ class ContainerBuilder
                 $value = $that->filter($parameterName, $value, $filters, $that->container);
                 
                 if (isset($this->container[$parameterName]) && $merge ) {
-                    $value = array_replace($this->container[$parameterName], $value);
+                    $value = array_replace_recursive($this->container[$parameterName], $value);
                 }                
             }
             $this->container[$parameterName] = $value;			                
