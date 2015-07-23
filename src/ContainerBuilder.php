@@ -207,8 +207,13 @@ class ContainerBuilder
 					
 					// let another object modify this instance
 					foreach ((array)$serviceConf->getConfigurators() as $config) {
-						list($serviceName, $method) = $config;
-						call_user_func_array(array($that->normalize($serviceName, $container), $method), array($instance));
+						$configurator = array_shift($config);
+                        $method = array_shift($config);
+						$params = array($instance);
+						foreach((array)$config as $argument) {
+							$params[] = $that->normalize($argument, $container);
+						}
+						call_user_func_array(array($that->normalize($configurator, $container), $method), $params);
 					}
 
 					return $instance;				
