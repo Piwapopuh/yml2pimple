@@ -24,6 +24,8 @@
         "symfony/config": "v2.6.0",
 		"symfony/yaml": "v2.6.0",
 		"symfony/property-access": "v2.6.0",
+		"symfony/stopwatch": "v2.6.0",
+		"symfony/expression-language": "v2.6.0",
 		"ocramius/proxy-manager": "1.0.*"
     },
     "config": {
