@@ -7,12 +7,10 @@ use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 class ExpressionNormalizer
 {
     private $parser;
-    protected $container;
     protected $key;
 
-    public function __construct($container, $key = '_normalize', $ExpressionLanguage $parser = null)
+    public function __construct($key = '_normalize', $ExpressionLanguage $parser = null)
     {
-        $this->container = $container;
         $this->key = $key;
         
         if (is_null($parser))
@@ -21,9 +19,9 @@ class ExpressionNormalizer
         }
     }
 
-    public function normalize($value) {
+    public function normalize($value, $container) {
         if (is_string($value) && '?' == substr($value, 0, 1)) {
-            $value = $this->parser->evaluate(substr($value, 1), $this->container[$this->key]);
+            $value = $this->parser->evaluate(substr($value, 1), $container[$this->key]);
         }
         return $value;
     }
