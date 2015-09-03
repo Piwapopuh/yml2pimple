@@ -9,7 +9,7 @@ class ExpressionNormalizer
     private $parser;
     protected $key;
 
-    public function __construct($key = '_normalize', $ExpressionLanguage $parser = null)
+    public function __construct($key = '_normalize', ExpressionLanguage $parser = null)
     {
         $this->key = $key;
         
