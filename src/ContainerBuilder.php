@@ -4,7 +4,6 @@ namespace G\Yaml2Pimple;
 
 use ProxyManager\Proxy\LazyLoadingInterface;
 use G\Yaml2Pimple\Normalizer\PimpleNormalizer;
-use G\Yaml2Pimple\Filter\FilterInterface;
 
 class ContainerBuilder
 {
@@ -12,56 +11,11 @@ class ContainerBuilder
 	private $normalizer;
 	private $factory;
     private $lazy_paramters;
-	private $filters;
     
     public function __construct(\Pimple $container)
     {
         $this->container = $container;
         $this->lazy_paramters = false;
-        $this->filters = array();
-    }
-
-    public function addFilter(FilterInterface $filter)
-    {
-        $this->filters[$filter->getFunc()] = $filter;
-        return $this;
-    }
-    
-    public function parseFilters(&$value, $container)
-    {
-        $temp = explode('|', $value);
-        $value = array_shift($temp);
-        $filters = array();
-        foreach($temp as $p) {
-            if (preg_match('{^([a-z0-9_]+)(\(.*?\))?$}', $p, $match)) {
-                $args = preg_split("/[\s,]+/", $match[2]);
-                $args = $this->normalize($args, $container);
-                $filters[] = array(trim($match[1]), $args);
-            }
-        }
-        return $filters;
-    }
-    
-    public function filter($key, $value, $filters, $container)
-    {  
-        if (is_array($value)) {
-            $res = array();
-            foreach($value as $k => $v) {
-                $_filters = $this->parseFilters($k, $container);
-                $v = $this->filter($k, $v, $_filters, $container);
-                $res[$k] = $v;
-            }
-            $value = $res;    
-        }        
-        
-        foreach((array)$filters as $filter) 
-        {
-            list($func, $args) = $filter;
-            if (isset($this->filters[$func])) {
-                $value = $this->filters[$func]->filter($container, $key, $value, $args);
-            }
-        }         
-        return $value;
     }
     
     public function setParametersLazy($bool = true)
@@ -116,14 +70,12 @@ class ContainerBuilder
             // normalize complex parameters lazy on access or right now?
             if ($this->lazy_paramters)
             {            
-                $filters = $this->parseFilters($parameterName, $this->container);
                 // we wrap our parameter in a magic proxy class with a __invoke method which is
                 // called automatically on access by pimple. this way we have a chance to access
                 // parameters as references which could be set later
                 // the value is evaluated on every access
-                $value = new LazyParameterFactory(function($c) use ($that, $parameterName, $parameterValue, $filters) {
+                $value = new LazyParameterFactory(function($c) use ($that, $parameterName, $parameterValue) {
                     $parameterValue = $that->normalize($parameterValue, $c);
-                    $parameterValue = $that->filter($parameterName, $parameterValue, $filters, $c);
                     return $parameterValue;
                 });
                 
@@ -148,11 +100,8 @@ class ContainerBuilder
                 if (0 === strpos($parameterName, '$')) {
                     $parameterName = substr($parameterName, 1);
                 }
-                
-                $filters = $that->parseFilters($parameterName, $that->container);
-                
+                               
                 $value = $that->normalize($parameterValue, $that->container);
-                $value = $that->filter($parameterName, $value, $filters, $that->container);
                 
                 if (isset($this->container[$parameterName]) && $merge ) {
                     $value = array_replace_recursive($this->container[$parameterName], $value);
