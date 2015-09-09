@@ -6,7 +6,7 @@ use \Symfony\Component\PropertyAccess\PropertyAccess;
 
 class PimpleNormalizer
 {
-	protected $accessor;
+	public $accessor;
 	
     public function __construct()
     {
