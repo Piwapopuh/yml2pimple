@@ -45,6 +45,14 @@ class ContainerBuilder
 		
 		return $this;
 	}
+
+	/**
+	 * @return mixed
+	 */
+	public function getFactory()
+	{
+		return $this->factory;
+	}
 	
     public function buildFromArray($conf)
     {
@@ -171,8 +179,9 @@ class ContainerBuilder
 				// create a lazy proxy
 				if ($serviceConf->isLazy() && !is_null($this->factory))
 				{
-					$instantiator = function ($container) use ($className, $instantiator) {	
-						return $this->factory->createProxy($className,
+					$that = $this;
+					$instantiator = function ($container) use ($that, $className, $instantiator) {
+						return $that->getFactory()->createProxy($className,
 							function (&$wrappedInstance, LazyLoadingInterface $proxy) use ($container, $instantiator) {
 									$wrappedInstance = call_user_func($instantiator, $container);
 								$proxy->setProxyInitializer(null);
