@@ -130,4 +130,18 @@ class Definition
     {
         return !empty($this->factory);
     }	
+    
+    public function _set($array) 
+    {
+        foreach($array as $key => $value) {
+            $this->$key = $value;
+        }
+    }
+    
+    public static function __set_state($array)
+    {
+        $obj = new Definition;
+        $obj->_set($array);
+        return $obj;
+    }
 }

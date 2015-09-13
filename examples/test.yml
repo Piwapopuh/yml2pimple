@@ -1,0 +1,59 @@
+parameters:
+  app_class: App
+  name: Gonzalo
+  deep:
+    # parameters can contain other parameters
+    first: 'From the deep (%app_class%)'
+    second: [1,2,3]
+    third: [a,b,c]
+  
+  desc1: |
+   <br><strong>this is a example for a lazy constructed parameter combined from
+   fragments defined later, its dynamic and is evaluated every time
+   its accessed</strong>
+  combined: '<p>Lazy Parameter example: %fragment1% %fragment2%</p>'
+
+  desc2: |
+   <br><strong>this is a example for a lazy constructed parameter combined from
+   fragments defined later, its like a singleton (the paramater name starts with an $)
+   and is frozen after its first accessed</strong>
+  $combined2: '<p>Lazy Parameter example2: %fragment1% %fragment2%</p>'
+  $_normalize:
+    test: @service_container
+  
+services:
+  App:
+    # class names can reference parameters
+    class: %app_class%
+    # prototype returns a new instance each time
+    scope: prototype
+    # the instance is constructed lazy with a proxy factory
+    lazy: true
+    arguments: [@Proxy, %name%]
+    calls:
+        - [setName, ['Test']]
+        # this is a optional parameter
+        - [setDummy, ['@?Dummy']]
+    # a configurator can modify the instance
+    configurator: ['@Configurator', configure]
+
+    
+  Proxy:
+    class: Proxy
+    lazy: true
+    # the instance is created by the factory class
+    factory: ['Factory', 'create']
+    arguments: [@service_container]
+    #arguments: [@Curl]
+    
+  Curl:
+    class: Curl
+    lazy:  true
+
+  Configurator:
+    class:     Test
+    # we can access elements of arrays with the symfony property access style (via normalizer)
+    arguments: ['%deep..first%', '?"hallo"~" Welt "~test["name"]']
+
+  Factory:
+    class: Factory
