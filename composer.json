@@ -27,8 +27,7 @@
 		"symfony/stopwatch": "v2.6.0",
 		"symfony/expression-language": "v2.6.0",
 		"ocramius/proxy-manager": "1.0.*",
-		"opis/closure": "^2.0.0",
-		"jeremeamia/superclosure": "~2.0"
+		"td7650/superclosure": "2.1.1"
     },
     "config": {
         "bin-dir": "bin/"

@@ -24,9 +24,9 @@ use G\Yaml2Pimple\Normalizer\ExpressionNormalizer;
 use G\Yaml2Pimple\Normalizer\PropertyAccessPimpleNormalizer;
 use Symfony\Component\Config\FileLocator;
 use ProxyManager\Factory\LazyLoadingValueHolderFactory;
-use Opis\Closure\SerializableClosure;
 
 use SuperClosure\Serializer;
+use SuperClosure\SerializableClosure;
 use SuperClosure\Analyzer\AstAnalyzer;
 
 // set a proxy cache for performance tuning
@@ -58,11 +58,14 @@ $loader->load('test.yml');
 $fn = $container->raw('Configurator');
 
 // Wrap the closure
-//$wrapper = new SerializableClosure($fn);
-//var_dump($wrapper);
+Serializer::setExcludeFromContext('that', $builder);
+$test = new Serializer(new AstAnalyzer());
+$serialized = $test->serialize($fn);
+//var_dump($serialized);
+
 // Now it can be serialized
 //$serialized = serialize($wrapper);
-
+/*
 $serializer = new ClosureExporter();
 $serializer->setContextReferences(array('that' => &$builder));
 
@@ -70,6 +73,9 @@ $serialized = $serializer->export($fn);
 var_dump($serialized);
 
 $unserialized = $serializer->import($serialized);
+*/
+$unserialized = $test->unserialize($serialized);
+var_dump($unserialized);
 $c = $unserialized($container);
 var_dump($c);
 
