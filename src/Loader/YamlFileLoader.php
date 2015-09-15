@@ -16,18 +16,23 @@ class YamlFileLoader
     private $yamlParser;
     private $container;
     private $currentDir;
+    private $currentFile;
 
     public function __construct(FileLocatorInterface $fileLocator)
     {
         $this->locator = $fileLocator;
     }
 
-    public function load($file, &$builder = null)
+    public function load($file, &$builder = null, $isImport = false)
     {
         $this->container = array();
 
         $path = $this->locator->locate($file);
-
+        
+        if (!$isImport) {
+            $this->currentFile = $file;
+        }
+        
         $content = $this->loadFile($path);
 
         if (null === $content) {
@@ -36,9 +41,9 @@ class YamlFileLoader
 
         $this->parseImports($content, $path, $builder);
 
-        $this->parseParameters($content, $file);
+        $this->parseParameters($content);
 
-        $this->parseDefinitions($content, $file);
+        $this->parseDefinitions($content);
 
         $builder->buildFromArray($this->container);
     }
@@ -93,7 +98,7 @@ class YamlFileLoader
         foreach ($content['imports'] as $import) {
             $this->setCurrentDir(dirname($file));
             //$this->import($import['resource'], null, isset($import['ignore_errors']) ? (bool)$import['ignore_errors'] : false, $file);
-            $this->load($import['resource'], $builder);
+            $this->load($import['resource'], $builder, true);
         }
     }
 
@@ -102,34 +107,34 @@ class YamlFileLoader
         $this->currentDir = $dir;
     }
 
-    private function parseParameters($content, $file = null)
+    private function parseParameters($content)
     {
         if (isset($content['parameters'])) {
             foreach ($content['parameters'] as $key => $value)
             {
                 $param = new Parameter($key, $value);
-                $param->setFile($file);
+                $param->setFile($this->currentFile);
 
                 $this->container['parameters'][] = $param;
             }
         }
     }
 
-    private function parseDefinitions($content, $file)
+    private function parseDefinitions($content)
     {
         if (!isset($content['services'])) {
             return;
         }
 
         foreach ($content['services'] as $id => $service) {
-            $this->parseDefinition($id, $service, $file);
+            $this->parseDefinition($id, $service);
         }
     }
 
-    private function parseDefinition($id, $service, $file = null)
+    private function parseDefinition($id, $service)
     {
         $definition = new Definition();
-        $definition->setFile($file);
+        $definition->setFile($this->currentFile);
 
         if (isset($service['synthetic'])) {
             $definition->setSynthetic($service['synthetic']);
