@@ -34,7 +34,7 @@ class YamlFileLoader
             return;
         }
 
-        $this->parseImports($content, $path);
+        $this->parseImports($content, $path, $builder);
 
         $this->parseParameters($content, $file);
 
@@ -84,7 +84,7 @@ class YamlFileLoader
         return $content;
     }
 
-    private function parseImports($content, $file)
+    private function parseImports($content, $file, &$builder)
     {
         if (!isset($content['imports'])) {
             return;
@@ -92,7 +92,8 @@ class YamlFileLoader
 
         foreach ($content['imports'] as $import) {
             $this->setCurrentDir(dirname($file));
-            $this->import($import['resource'], null, isset($import['ignore_errors']) ? (bool)$import['ignore_errors'] : false, $file);
+            //$this->import($import['resource'], null, isset($import['ignore_errors']) ? (bool)$import['ignore_errors'] : false, $file);
+            $this->load($import['resource'], $builder);
         }
     }
 
