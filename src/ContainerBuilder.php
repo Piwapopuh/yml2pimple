@@ -189,7 +189,7 @@ class ContainerBuilder
     public function createInstance(Definition $serviceConf, $className, $container)
     {
         // decode the argument list
-        $params = $this->normalize($serviceConf->getArguments(), $container);
+        $params = (array)$this->normalize($serviceConf->getArguments(), $container);
 
         if ($serviceConf->hasFactory())
         {
