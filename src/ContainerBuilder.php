@@ -186,7 +186,7 @@ class ContainerBuilder
         }
     }
 
-    protected function createInstance(Definition $serviceConf, $className, $container)
+    public function createInstance(Definition $serviceConf, $className, $container)
     {
         // decode the argument list
         $params = $this->normalize($serviceConf->getArguments(), $container);
@@ -212,7 +212,7 @@ class ContainerBuilder
 		return call_user_func_array(array($factory, $method), $params);
 	}
 
-	protected function addMethodCalls(array $calls = array(), &$instance, $container)
+	public function addMethodCalls(array $calls = array(), &$instance, $container)
 	{
 		foreach ($calls as $call) {
 			list($method, $arguments) = $call;
@@ -221,7 +221,7 @@ class ContainerBuilder
 		}
 	}
 
-	protected function addConfigurators(array $configs = array(), &$instance, $container)
+	public function addConfigurators(array $configs = array(), &$instance, $container)
 	{
 		// let another object modify this instance
 		foreach ($configs as $config) {
