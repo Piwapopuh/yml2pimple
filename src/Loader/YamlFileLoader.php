@@ -8,25 +8,24 @@ use Symfony\Component\Yaml\Parser as YamlParser;
 
 use G\Yaml2Pimple\ContainerBuilder;
 use G\Yaml2Pimple\Definition;
+use G\Yaml2Pimple\Parameter;
 
-class YamlFileLoader extends Loader
+class YamlFileLoader
 {
     private $locator;
     private $yamlParser;
     private $container;
     private $currentDir;
-    private $builder;
 
-    public function __construct(ContainerBuilder $builder, FileLocatorInterface $fileLocator)
+    public function __construct(FileLocatorInterface $fileLocator)
     {
         $this->locator = $fileLocator;
-        $this->builder = $builder;
     }
 
-    public function load($file, $type=null)
+    public function load($file, &$builder = null)
     {
         $this->container = array();
-    
+
         $path = $this->locator->locate($file);
 
         $content = $this->loadFile($path);
@@ -37,15 +36,11 @@ class YamlFileLoader extends Loader
 
         $this->parseImports($content, $path);
 
-        if (isset($content['parameters'])) {
-            foreach ($content['parameters'] as $key => $value) {
-                $this->container['parameters'][$key] = $value;
-            }
-        }
+        $this->parseParameters($content, $file);
 
         $this->parseDefinitions($content, $file);
 
-        $this->builder->buildFromArray($this->container);
+        $builder->buildFromArray($this->container);
     }
 
     public function supports($resource, $type=null)
@@ -106,6 +101,18 @@ class YamlFileLoader extends Loader
         $this->currentDir = $dir;
     }
 
+    private function parseParameters($content, $file = null)
+    {
+        if (isset($content['parameters'])) {
+            foreach ($content['parameters'] as $key => $value)
+            {
+                $param = new Parameter($key, $value);
+                $param->setFile($file);
+
+                $this->container['parameters'][] = $param;
+            }
+        }
+    }
 
     private function parseDefinitions($content, $file)
     {
@@ -118,9 +125,10 @@ class YamlFileLoader extends Loader
         }
     }
 
-    private function parseDefinition($id, $service)
+    private function parseDefinition($id, $service, $file = null)
     {
         $definition = new Definition();
+        $definition->setFile($file);
 
         if (isset($service['synthetic'])) {
             $definition->setSynthetic($service['synthetic']);

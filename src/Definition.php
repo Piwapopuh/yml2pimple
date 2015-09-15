@@ -19,7 +19,9 @@ class Definition
 	protected $synthetic;
 	
 	protected $factory;
-	
+
+	protected $file;
+
 	public function __construct()
 	{
 		$this->calls = array();
@@ -28,6 +30,22 @@ class Definition
 		$this->lazy = false;
 		$this->synthetic = false;
 		$this->factory = false;
+	}
+
+	/**
+	 * @return string $file
+	 */
+	public function getFile()
+	{
+		return $this->file;
+	}
+
+	/**
+	 * @param string $file
+	 */
+	public function setFile($file)
+	{
+		$this->file = $file;
 	}
 	
     public function setClass($class)

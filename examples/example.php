@@ -18,16 +18,17 @@ include __DIR__ . '/ClosureExporter.php';
 
 use G\Yaml2Pimple\ContainerBuilder;
 use G\Yaml2Pimple\Loader\YamlFileLoader;
+use G\Yaml2Pimple\Loader\CacheLoader;
 use G\Yaml2Pimple\Normalizer\ChainNormalizer;
 use G\Yaml2Pimple\Normalizer\PimpleNormalizer;
 use G\Yaml2Pimple\Normalizer\ExpressionNormalizer;
-use G\Yaml2Pimple\Normalizer\PropertyAccessPimpleNormalizer;
 use Symfony\Component\Config\FileLocator;
 use ProxyManager\Factory\LazyLoadingValueHolderFactory;
 
 use SuperClosure\Serializer;
 use SuperClosure\SerializableClosure;
 use SuperClosure\Analyzer\AstAnalyzer;
+use SuperClosure\Analyzer\TokenAnalyzer;
 
 // set a proxy cache for performance tuning
 $config = new ProxyManager\Configuration();
@@ -36,6 +37,8 @@ $config->setProxiesTargetDir(__DIR__ . '/cache/');
 // then register the autoloader
 spl_autoload_register($config->getProxyAutoloader());
 
+$factory = new LazyLoadingValueHolderFactory($config);
+
 $container = new \Pimple();
 
 $normalizer = new ChainNormalizer( array(
@@ -43,40 +46,50 @@ $normalizer = new ChainNormalizer( array(
 	new ExpressionNormalizer()
 ));
 
+$ymlLoader = new YamlFileLoader(new FileLocator(__DIR__));
+
+$cacheLoader = new CacheLoader($ymlLoader);
+$cacheLoader->setCacheDir(__DIR__ . '/cache/');
+
 $builder = new ContainerBuilder($container);
 // load parameters lazy (try setting to false)
 $builder->setParametersLazy(true);
 // set the normalizers 
 $builder->setNormalizer($normalizer);
 // lazy loading proxy manager factory
-$builder->setFactory(new LazyLoadingValueHolderFactory($config));
+$builder->setFactory($factory);
+// set our loader helper
+$builder->setLoader($ymlLoader);
 
-$loader = new YamlFileLoader($builder, new FileLocator(__DIR__));
+SerializableClosure::setExcludeFromContext('that', $builder);
+$serializer = new Serializer(new TokenAnalyzer());
 
-$loader->load('test.yml');
+$builder->setSerializer($serializer);
 
-$fn = $container->raw('Configurator');
+
+$then = microtime(true);
+for($i = 1; $i <= 100; $i++) {
+    $builder->load('test.yml');
+}
+$now = microtime(true);
+
+echo  sprintf("Elapsed:  %f", ($now-$then));
+$app = $container['App'];
+//$app->hello();
+var_dump($app);
+/*
+$fn = $container->raw('name');
 
 // Wrap the closure
 Serializer::setExcludeFromContext('that', $builder);
 $test = new Serializer(new AstAnalyzer());
+var_dump($test->getData($fn, true));
+
 $serialized = $test->serialize($fn);
 //var_dump($serialized);
 
-// Now it can be serialized
-//$serialized = serialize($wrapper);
-/*
-$serializer = new ClosureExporter();
-$serializer->setContextReferences(array('that' => &$builder));
-
-$serialized = $serializer->export($fn);
-var_dump($serialized);
-
-$unserialized = $serializer->import($serialized);
-*/
 $unserialized = $test->unserialize($serialized);
-var_dump($unserialized);
 $c = $unserialized($container);
-var_dump($c);
-
+var_dump($c());
+*/
 
