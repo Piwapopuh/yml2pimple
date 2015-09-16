@@ -98,7 +98,11 @@ class YamlFileLoader
         foreach ($content['imports'] as $import) {
             $this->setCurrentDir(dirname($file));
             //$this->import($import['resource'], null, isset($import['ignore_errors']) ? (bool)$import['ignore_errors'] : false, $file);
-            $this->load($import['resource'], $builder, true);
+            $resource = $import['resource'];
+            if (!$this->isAbsolutePath($resource)) {
+                $resource = dirname($file) . '/' . $resource;
+            }
+            $this->load($resource, $builder, true);
         }
     }
 
@@ -177,5 +181,27 @@ class YamlFileLoader
     private function resolveServices($value)
     {
         return $value;
+    }
+
+    /**
+     * Returns whether the file path is an absolute path.
+     *
+     * @param string $file A file path
+     *
+     * @return bool
+     */
+    private function isAbsolutePath($file)
+    {
+        if ($file[0] === '/' || $file[0] === '\\'
+            || (strlen($file) > 3 && ctype_alpha($file[0])
+                && $file[1] === ':'
+                && ($file[2] === '\\' || $file[2] === '/')
+            )
+            || null !== parse_url($file, PHP_URL_SCHEME)
+        ) {
+            return true;
+        }
+
+        return false;
     }
 }

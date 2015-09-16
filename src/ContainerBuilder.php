@@ -14,7 +14,6 @@ class ContainerBuilder
     private $resources;
     private $serializer;
     private $loader;
-    private $cacheDir;
 
     public function __construct(\Pimple $container)
     {
@@ -118,72 +117,74 @@ class ContainerBuilder
 			$this->addDefaultNormalizer();
 		}
         
-		$that = $this;
-
         foreach ($conf['parameters'] as $parameterConf)
         {
             $parameterName  = $parameterConf->getParameterName();
-            $resource       = $parameterConf->getFile();
-
-            // normalize complex parameters lazy on access or right now?
-            if ($this->lazyParameters)
-            {
-                // create a lazy proxy for our parameter
-                $value = $this->createParameterProxy($parameterConf);
-            } else {
-                $value = $this->extractParameter($parameterConf);
-            }
-
-            $this->container[$parameterName] = $value;
+            $this->container[$parameterName] = $this->constructParameter($parameterConf);
 			// add entry per resource for caching
+			$resource = $parameterConf->getFile();
 			$this->resources[$resource][] = $parameterName;
         }	
 		
         foreach ($conf['services'] as $serviceName => $serviceConf)
 		{
+            $this->container[$serviceName] = $this->constructService($serviceConf);
+            // add entry per resource for caching
             $resource = $serviceConf->getFile();
-
-			if ($serviceConf->isSynthetic())
-			{	
-				// we dont know how to create a synthetic service, its set later
-				$this->container[$serviceName] = null;		
-			} else
-            {
-                // the classname can be a parameter reference
-                $className = $this->normalize($serviceConf->getClass(), $this->container);
-
-				// the instantiator closure function			
-				$factoryFunction = function ($container) use ($that, $serviceConf, $serviceName, $className)
-                {
-                    $instance = $that->createInstance($serviceConf, $className, $container);
-					// add some method calls
-					$that->addMethodCalls($serviceConf->getCalls(), $instance, $container);
-					// let another object modify this instance
-					$that->addConfigurators($serviceConf->getConfigurators(), $instance, $container);
-					return $instance;
-				};
-				
-				// create a lazy proxy
-				if ($serviceConf->isLazy())
-				{
-                    $factoryFunction = $this->createProxy($className, $factoryFunction);
-				}
-				
-				/**
-				* By default, each time you get a service, Pimple v1.x returns a
-				* new instance of it. If you want the same instance to be returned
-				* for all calls, wrap your anonymous function with the share() method
-				**/
-				if ( "container" == $serviceConf->getScope() )
-				{
-                    $factoryFunction = $this->container->share( $factoryFunction );
-				}
-				
-				$this->container[$serviceName] = $factoryFunction;
-				// add entry per resource for caching
-				$this->resources[$resource][] = $serviceName;
-			}
+            $this->resources[$resource][] = $serviceName;
         }
+    }
+
+    public function constructParameter(Parameter $parameterConf)
+    {
+        // normalize complex parameters lazy on access or right now?
+        if ($this->lazyParameters)
+        {
+            // create a lazy proxy for our parameter
+            $value = $this->createParameterProxy($parameterConf);
+        } else {
+            $value = $this->extractParameter($parameterConf);
+        }
+        return $value;
+    }
+
+    public function constructService(Definition $serviceConf)
+    {
+        $factoryFunction = null;
+        if (!$serviceConf->isSynthetic())
+        {
+            // we dont know how to create a synthetic service, its set later
+            // the classname can be a parameter reference
+            $className = $this->normalize($serviceConf->getClass(), $this->container);
+            $that = $this;
+            // the instantiator closure function
+            $factoryFunction = function ($container) use ($that, $serviceConf, $className)
+            {
+                $instance = $that->createInstance($serviceConf, $className, $container);
+                // add some method calls
+                $that->addMethodCalls($serviceConf->getCalls(), $instance, $container);
+                // let another object modify this instance
+                $that->addConfigurators($serviceConf->getConfigurators(), $instance, $container);
+                return $instance;
+            };
+
+            // create a lazy proxy
+            if ($serviceConf->isLazy())
+            {
+                $factoryFunction = $this->createProxy($className, $factoryFunction);
+            }
+
+            /**
+             * By default, each time you get a service, Pimple v1.x returns a
+             * new instance of it. If you want the same instance to be returned
+             * for all calls, wrap your anonymous function with the share() method
+             **/
+            if ( "container" == $serviceConf->getScope() )
+            {
+                $factoryFunction = $this->container->share( $factoryFunction );
+            }
+        }
+        return $factoryFunction;
     }
 
     public function createInstance(Definition $serviceConf, $className, $container)
