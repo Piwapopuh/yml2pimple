@@ -1,3 +1,7 @@
+# test import
+imports:
+  - { resource: test2.yml}
+
 parameters:
   app_class: App
   name: Gonzalo

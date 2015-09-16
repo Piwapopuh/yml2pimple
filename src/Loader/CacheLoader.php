@@ -13,6 +13,7 @@ class CacheLoader
 {
     private $loader;
     private $cacheDir;
+    private $cacheFile;
 
     public function __construct($loader)
     {
@@ -30,23 +31,31 @@ class CacheLoader
     public function load($file, &$builder = null)
     {
         $crc32 = crc32($file);
-        $cacheFile = $this->cacheDir . '/___SC___' . $crc32 . '.txt';
+        $this->cacheFile = $this->cacheDir . '/___SC___' . $crc32 . '.php';
 
-        if (file_exists($cacheFile) && filemtime($file) < filemtime($cacheFile)) {
-            $data = file_get_contents($cacheFile);
-            try {
-                $data = $builder->unserialize($data);
-                $builder->add($data);
+        if (file_exists($this->cacheFile)) {
+            $conf = require $this->cacheFile;
+            if ($this->isFresh($conf['resources'])) {
+                $builder->buildFromArray($conf);
                 return;
-            } catch(\Exception $e) {
-                //
             }
         }
 
-        $this->loader->load($file, $builder);
+        $conf = $this->loader->load($file);
+        $builder->buildFromArray($conf);
 
-        $data = $builder->getResources($file);
-        $data = $builder->serialize($data);
-        file_put_contents($cacheFile, $data);
+        $data = '<?php return ' . var_export($conf, true) . ';';
+        file_put_contents($this->cacheFile, $data);
     }
+
+    protected function isFresh($resources = array())
+    {
+        foreach($resources as $resource) {
+            if (filemtime($resource) > filemtime($this->cacheFile)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

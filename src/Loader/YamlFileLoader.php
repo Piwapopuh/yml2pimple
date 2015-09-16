@@ -25,14 +25,13 @@ class YamlFileLoader
 
     public function load($file, &$builder = null, $isImport = false)
     {
-        $this->container = array();
-
-        $path = $this->locator->locate($file);
-        
         if (!$isImport) {
+            $this->container = array();
+            $this->container['resources'] = array($file);
             $this->currentFile = $file;
         }
-        
+
+        $path = $this->locator->locate($file);
         $content = $this->loadFile($path);
 
         if (null === $content) {
@@ -40,12 +39,14 @@ class YamlFileLoader
         }
 
         $this->parseImports($content, $path, $builder);
-
         $this->parseParameters($content);
-
         $this->parseDefinitions($content);
 
-        $builder->buildFromArray($this->container);
+        if (!is_null($builder)) {
+            $builder->buildFromArray($this->container);
+        } else {
+            return $this->container;
+        }
     }
 
     public function supports($resource, $type=null)
@@ -102,6 +103,7 @@ class YamlFileLoader
             if (!$this->isAbsolutePath($resource)) {
                 $resource = dirname($file) . '/' . $resource;
             }
+            $this->container['resources'][] = $resource;
             $this->load($resource, $builder, true);
         }
     }

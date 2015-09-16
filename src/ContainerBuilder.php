@@ -14,12 +14,30 @@ class ContainerBuilder
     private $resources;
     private $serializer;
     private $loader;
+    private $nestedLevel;
 
     public function __construct(\Pimple $container)
     {
         $this->container 		= $container;
         $this->lazyParameters 	= false;
 		$this->resources 		= array();
+        $this->nestedLevel      = array();
+    }
+
+    /**
+     * @return array
+     */
+    public function getNestedLevel($name)
+    {
+        return isset($this->nestedLevel[$name]) ? $this->nestedLevel[$name] : 0;
+    }
+
+    /**
+     * @param array $nestedLevel
+     */
+    public function setNestedLevel($name, $nestedLevel)
+    {
+        $this->nestedLevel[$name] = $nestedLevel;
     }
 
     public function setParametersLazy($bool = true)
@@ -267,8 +285,12 @@ class ContainerBuilder
             return $parameterValue;
         }, $this->serializer);
 
+        $nestedLevel = $this->getNestedLevel($parameterName);
         // merge existing data per default
-        if (isset($this->container[$parameterName]) && $parameterConf->mergeExisting() ) {
+        if ($parameterConf->mergeExisting() && $nestedLevel < 100 && isset($this->container[$parameterName]) )
+        {
+            // avoid too deep nested level closures
+            $this->setNestedLevel($parameterName, $nestedLevel + 1);
             // create a wrapper function for lazy calling
             $value = $this->container->extend($parameterName, function($old, $container) use ($parameterName, $value) {
                 // extract the value from our LazyParameterFactory

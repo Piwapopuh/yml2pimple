@@ -1,0 +1,5 @@
+# is imported
+services:
+  Curl:
+    class: Curl
+    lazy:  true

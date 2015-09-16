@@ -59,7 +59,7 @@ $builder->setNormalizer($normalizer);
 // lazy loading proxy manager factory
 $builder->setFactory($factory);
 // set our loader helper
-$builder->setLoader($ymlLoader);
+$builder->setLoader($cacheLoader);
 
 SerializableClosure::setExcludeFromContext('that', $builder);
 $serializer = new Serializer(new TokenAnalyzer());
@@ -68,14 +68,14 @@ $builder->setSerializer($serializer);
 
 
 $then = microtime(true);
-for($i = 1; $i <= 100; $i++) {
+for($i = 1; $i <= 1000; $i++) {
     $builder->load('test.yml');
 }
 $now = microtime(true);
 
 echo  sprintf("Elapsed:  %f", ($now-$then));
 $app = $container['App'];
-//$app->hello();
+$app->hello();
 var_dump($app);
 /*
 $fn = $container->raw('name');
