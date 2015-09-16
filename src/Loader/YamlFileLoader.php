@@ -23,7 +23,7 @@ class YamlFileLoader
         $this->locator = $fileLocator;
     }
 
-    public function load($file, &$builder = null, $isImport = false)
+    public function load($file, $isImport = false)
     {
         if (!$isImport) {
             $this->container = array();
@@ -38,15 +38,11 @@ class YamlFileLoader
             return;
         }
 
-        $this->parseImports($content, $path, $builder);
+        $this->parseImports($content, $path);
         $this->parseParameters($content);
         $this->parseDefinitions($content);
 
-        if (!is_null($builder)) {
-            $builder->buildFromArray($this->container);
-        } else {
-            return $this->container;
-        }
+        return $this->container;
     }
 
     public function supports($resource, $type=null)
@@ -90,21 +86,22 @@ class YamlFileLoader
         return $content;
     }
 
-    private function parseImports($content, $file, &$builder)
+    private function parseImports($content, $file)
     {
         if (!isset($content['imports'])) {
             return;
         }
 
-        foreach ($content['imports'] as $import) {
+        foreach ($content['imports'] as $import)
+        {
             $this->setCurrentDir(dirname($file));
-            //$this->import($import['resource'], null, isset($import['ignore_errors']) ? (bool)$import['ignore_errors'] : false, $file);
+
             $resource = $import['resource'];
             if (!$this->isAbsolutePath($resource)) {
                 $resource = dirname($file) . '/' . $resource;
             }
             $this->container['resources'][] = $resource;
-            $this->load($resource, $builder, true);
+            $this->load($resource, true);
         }
     }
 

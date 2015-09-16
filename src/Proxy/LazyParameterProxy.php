@@ -1,26 +1,32 @@
 <?php
+/**
+ * Created by PhpStorm.
+ * User: draeger
+ * Date: 16.09.2015
+ * Time: 13:17
+ */
 
-namespace G\Yaml2Pimple;
+namespace G\Yaml2Pimple\Proxy;
 
 use SuperClosure\SerializerInterface;
 
-class LazyParameterFactory
+class LazyParameterProxy
 {
-	protected $callback;
+    protected $callback;
     protected $frozen;
     protected $serializer;
 
-	public function __construct($callback, SerializerInterface $serializer = null)
-	{
-		$this->callback     = $callback;
+    public function __construct($callback, SerializerInterface $serializer = null)
+    {
+        $this->callback     = $callback;
         $this->frozen       = false;
         $this->serializer   = $serializer;
-	}
+    }
 
-	public function __invoke($c)
-	{
-		return call_user_func($this->callback, $c);
-	}
+    public function __invoke($c)
+    {
+        return call_user_func($this->callback, $c);
+    }
 
     /**
      * @return mixed
@@ -56,5 +62,4 @@ class LazyParameterFactory
     {
         $this->callback = $this->serializer->unwrapData($this->frozen);
     }
-
 }

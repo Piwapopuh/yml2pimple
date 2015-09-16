@@ -15,9 +15,13 @@ class CacheLoader
     private $cacheDir;
     private $cacheFile;
 
-    public function __construct($loader)
+    public function __construct($loader, $cacheDir = null)
     {
         $this->loader = $loader;
+        if (is_null($cacheDir)) {
+            $cacheDir = sys_get_temp_dir();
+        }
+        $this->cacheDir = $cacheDir;
     }
 
     /**
@@ -28,24 +32,28 @@ class CacheLoader
         $this->cacheDir = $cacheDir;
     }
 
-    public function load($file, &$builder = null)
+    /**
+     * @param $file
+     * @return mixed
+     */
+    public function load($file)
     {
         $crc32 = crc32($file);
         $this->cacheFile = $this->cacheDir . '/___SC___' . $crc32 . '.php';
 
         if (file_exists($this->cacheFile)) {
-            $conf = require $this->cacheFile;
-            if ($this->isFresh($conf['resources'])) {
-                $builder->buildFromArray($conf);
-                return;
+            $conf = include $this->cacheFile;
+            if (isset($conf['resources'])) {
+                if ($this->isFresh($conf['resources'])) {
+                    return $conf;
+                }
             }
         }
-
         $conf = $this->loader->load($file);
-        $builder->buildFromArray($conf);
 
         $data = '<?php return ' . var_export($conf, true) . ';';
         file_put_contents($this->cacheFile, $data);
+        return $conf;
     }
 
     protected function isFresh($resources = array())

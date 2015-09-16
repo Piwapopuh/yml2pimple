@@ -14,7 +14,6 @@ include __DIR__ . '/src/Curl.php';
 include __DIR__ . '/src/Proxy.php';
 include __DIR__ . '/src/Test.php';
 include __DIR__ . '/src/Factory.php';
-include __DIR__ . '/ClosureExporter.php';
 
 use G\Yaml2Pimple\ContainerBuilder;
 use G\Yaml2Pimple\Loader\YamlFileLoader;
@@ -23,52 +22,38 @@ use G\Yaml2Pimple\Normalizer\ChainNormalizer;
 use G\Yaml2Pimple\Normalizer\PimpleNormalizer;
 use G\Yaml2Pimple\Normalizer\ExpressionNormalizer;
 use Symfony\Component\Config\FileLocator;
-use ProxyManager\Factory\LazyLoadingValueHolderFactory;
 
-use SuperClosure\Serializer;
-use SuperClosure\SerializableClosure;
-use SuperClosure\Analyzer\AstAnalyzer;
-use SuperClosure\Analyzer\TokenAnalyzer;
+use G\Yaml2Pimple\Factory\ProxyManagerFactory;
+use G\Yaml2Pimple\Factory\ParameterFactory;
 
-// set a proxy cache for performance tuning
-$config = new ProxyManager\Configuration();
-$config->setProxiesTargetDir(__DIR__ . '/cache/');
+$container      = new \Pimple();
+$builder        = new ContainerBuilder($container);
 
-// then register the autoloader
-spl_autoload_register($config->getProxyAutoloader());
+$ymlLoader      = new YamlFileLoader(new FileLocator(__DIR__));
+$cacheLoader    = new CacheLoader($ymlLoader, __DIR__ . '/cache/');
 
-$factory = new LazyLoadingValueHolderFactory($config);
-
-$container = new \Pimple();
-
-$normalizer = new ChainNormalizer( array(
-	new PimpleNormalizer(), 
-	new ExpressionNormalizer()
-));
-
-$ymlLoader = new YamlFileLoader(new FileLocator(__DIR__));
-
-$cacheLoader = new CacheLoader($ymlLoader);
-$cacheLoader->setCacheDir(__DIR__ . '/cache/');
-
-$builder = new ContainerBuilder($container);
 // load parameters lazy (try setting to false)
 $builder->setParametersLazy(true);
 // set the normalizers 
-$builder->setNormalizer($normalizer);
-// lazy loading proxy manager factory
-$builder->setFactory($factory);
+$builder->setNormalizer(new ChainNormalizer( array(
+    new PimpleNormalizer(),
+    new ExpressionNormalizer()
+)));
+// lazy service proxy factory
+$builder->setFactory(new ProxyManagerFactory(__DIR__ . '/cache/'));
+// lazy parameter proxy factory
+$builder->setParameterFactory(new ParameterFactory());
 // set our loader helper
 $builder->setLoader($cacheLoader);
 
+/*
 SerializableClosure::setExcludeFromContext('that', $builder);
 $serializer = new Serializer(new TokenAnalyzer());
-
 $builder->setSerializer($serializer);
-
+*/
 
 $then = microtime(true);
-for($i = 1; $i <= 1000; $i++) {
+for($i = 1; $i <= 100; $i++) {
     $builder->load('test.yml');
 }
 $now = microtime(true);

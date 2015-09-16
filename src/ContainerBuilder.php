@@ -2,19 +2,29 @@
 
 namespace G\Yaml2Pimple;
 
-use ProxyManager\Proxy\LazyLoadingInterface;
+use G\Yaml2Pimple\Factory\LazyParameterFactory;
+use G\Yaml2Pimple\Factory\LazyServiceFactory;
 use G\Yaml2Pimple\Normalizer\PimpleNormalizer;
-
 class ContainerBuilder
 {
     private $container;
 	private $normalizer;
-	private $factory;
+
+    /**
+     * @var LazyServiceFactory $factory
+     */
+    private $factory;
+
+    /**
+     * @var LazyParameterFactory $parameterFactory
+     */
+    private $parameterFactory;
     private $lazyParameters;
     private $resources;
     private $serializer;
     private $loader;
     private $nestedLevel;
+    private $maxNestedLevel;
 
     public function __construct(\Pimple $container)
     {
@@ -22,19 +32,27 @@ class ContainerBuilder
         $this->lazyParameters 	= false;
 		$this->resources 		= array();
         $this->nestedLevel      = array();
+        $this->maxNestedLevel   = 50;
     }
 
     /**
-     * @return array
+     * @param mixed $parameterFactory
      */
+    public function setParameterFactory(LazyParameterFactory $parameterFactory)
+    {
+        $this->parameterFactory = $parameterFactory;
+    }
+
+    public function setMaxNestedLevel($maxNestedLevel)
+    {
+        $this->maxNestedLevel = $maxNestedLevel;
+    }
+
     public function getNestedLevel($name)
     {
         return isset($this->nestedLevel[$name]) ? $this->nestedLevel[$name] : 0;
     }
 
-    /**
-     * @param array $nestedLevel
-     */
     public function setNestedLevel($name, $nestedLevel)
     {
         $this->nestedLevel[$name] = $nestedLevel;
@@ -62,7 +80,7 @@ class ContainerBuilder
 	}
 
     /**
-     * @param Serializer $serializer
+     * @param $serializer
      */
     public function setSerializer($serializer)
     {
@@ -77,19 +95,11 @@ class ContainerBuilder
         $this->loader = $loader;
     }
 	
-	public function setFactory($factory)
+	public function setFactory(LazyServiceFactory $factory)
 	{
 		$this->factory = $factory;	
 		
 		return $this;
-	}
-
-	/**
-	 * @return mixed
-	 */
-	public function getFactory()
-	{
-		return $this->factory;
 	}
 
     protected function collectByKeys($keys = array())
@@ -101,9 +111,6 @@ class ContainerBuilder
         return $data;
     }
 
-	/**
-	 * @return array
-	 */
 	public function getResources($resource = null)
 	{
 		if (is_null($resource)) {
@@ -126,7 +133,8 @@ class ContainerBuilder
 
     public function load($file)
     {
-        $this->loader->load($file, $this);
+        $conf = $this->loader->load($file);
+        $this->buildFromArray($conf);
     }
 
     public function buildFromArray($conf)
@@ -137,26 +145,30 @@ class ContainerBuilder
         
         foreach ($conf['parameters'] as $parameterConf)
         {
-            $parameterName  = $parameterConf->getParameterName();
-            $this->container[$parameterName] = $this->constructParameter($parameterConf);
-			// add entry per resource for caching
-			$resource = $parameterConf->getFile();
-			$this->resources[$resource][] = $parameterName;
+            if ($parameterConf instanceof Parameter) {
+                $parameterName = $parameterConf->getParameterName();
+                $this->container[ $parameterName ] = $this->constructParameter($parameterConf);
+                // add entry per resource for caching
+                $resource = $parameterConf->getFile();
+                $this->resources[ $resource ][] = $parameterName;
+            }
         }	
 		
         foreach ($conf['services'] as $serviceName => $serviceConf)
 		{
-            $this->container[$serviceName] = $this->constructService($serviceConf);
-            // add entry per resource for caching
-            $resource = $serviceConf->getFile();
-            $this->resources[$resource][] = $serviceName;
+            if ($serviceConf instanceof Definition) {
+                $this->container[ $serviceName ] = $this->constructService($serviceConf);
+                // add entry per resource for caching
+                $resource = $serviceConf->getFile();
+                $this->resources[ $resource ][] = $serviceName;
+            }
         }
     }
 
     public function constructParameter(Parameter $parameterConf)
     {
         // normalize complex parameters lazy on access or right now?
-        if ($this->lazyParameters)
+        if ($this->lazyParameters && !is_null($this->parameterFactory))
         {
             // create a lazy proxy for our parameter
             $value = $this->createParameterProxy($parameterConf);
@@ -166,6 +178,10 @@ class ContainerBuilder
         return $value;
     }
 
+    /**
+     * @param Definition $serviceConf
+     * @return \Closure|null
+     */
     public function constructService(Definition $serviceConf)
     {
         $factoryFunction = null;
@@ -187,9 +203,9 @@ class ContainerBuilder
             };
 
             // create a lazy proxy
-            if ($serviceConf->isLazy())
+            if ($serviceConf->isLazy() && !is_null($this->factory))
             {
-                $factoryFunction = $this->createProxy($className, $factoryFunction);
+                $factoryFunction = $this->factory->createProxy($className, $factoryFunction);
             }
 
             /**
@@ -252,24 +268,10 @@ class ContainerBuilder
 		}
 	}
 
-	protected function createProxy($className, $func)
-	{
-        if (is_null($this->factory)) {
-            return $func;
-        }
-
-		$that = $this;
-		return function ($container) use ($that, $className, $func) {
-			return $that->getFactory()->createProxy($className,
-				function (&$wrappedInstance, LazyLoadingInterface $proxy) use ($container, $func) {
-					$wrappedInstance = call_user_func($func, $container);
-					$proxy->setProxyInitializer(null);
-					return true;
-				}
-			);
-		};
-	}
-
+    /**
+     * @param Parameter $parameterConf
+     * @return \Closure|LazyParameterFactory
+     */
     protected function createParameterProxy(Parameter $parameterConf)
     {
         $parameterName = $parameterConf->getParameterName();
@@ -280,14 +282,16 @@ class ContainerBuilder
         // parameters as references which could be set later
         // the value is evaluated on every access
         $that = $this;
-        $value = new LazyParameterFactory(function($container) use ($that, $parameterName, $parameterValue) {
+        $value = function($container) use ($that, $parameterName, $parameterValue) {
             $parameterValue = $that->normalize($parameterValue, $container);
             return $parameterValue;
-        }, $this->serializer);
+        };
+
+        $value = $this->parameterFactory->createProxy($value);
 
         $nestedLevel = $this->getNestedLevel($parameterName);
         // merge existing data per default
-        if ($parameterConf->mergeExisting() && $nestedLevel < 100 && isset($this->container[$parameterName]) )
+        if ($parameterConf->mergeExisting() && $nestedLevel < $this->maxNestedLevel && isset($this->container[$parameterName]) )
         {
             // avoid too deep nested level closures
             $this->setNestedLevel($parameterName, $nestedLevel + 1);
@@ -325,6 +329,10 @@ class ContainerBuilder
 
     public function normalize($value, $container)
     {
+        if (is_null($this->normalizer)) {
+            return $value;
+        }
+
         if (is_array($value)) {
             foreach($value as $k => $v) {
 				$value[$k] = $this->normalize($v, $container);
@@ -337,12 +345,20 @@ class ContainerBuilder
 
     public function serialize($data)
     {
+        if (is_null($this->serializer)) {
+            return $data;
+        }
+
         $data = $this->serializer->wrapData($data);
         return serialize($data);
     }
 
     public function unserialize($data)
     {
+        if (is_null($this->serializer)) {
+            return $data;
+        }
+
         $data = unserialize($data);
         $data = $this->serializer->unwrapData($data);
         return $data;
