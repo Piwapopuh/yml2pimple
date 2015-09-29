@@ -8,7 +8,7 @@
 
 namespace G\Yaml2Pimple\Factory;
 
-interface LazyServiceFactory
+interface ParameterProxyInterface
 {
-    public function createProxy($className, \Closure $func);
+    public function createProxy(\Closure $func);
 }

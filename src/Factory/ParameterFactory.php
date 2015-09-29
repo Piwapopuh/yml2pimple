@@ -1,21 +1,21 @@
 <?php
-
 namespace G\Yaml2Pimple\Factory;
 
-use SuperClosure\SerializerInterface;
-use G\Yaml2Pimple\Proxy\LazyParameterProxy;
+use \G\Yaml2Pimple\Parameter;
 
-class ParameterFactory implements LazyParameterFactory
-{
-    protected $serializer;
-
-	public function __construct(SerializerInterface $serializer = null)
+class ParameterFactory extends AbstractParameterFactory
+{   
+	public function create(Parameter $parameterConf, \Pimple &$container)
 	{
-        $this->serializer = $serializer;
-	}
+        $parameterName = $parameterConf->getParameterName();
+        $parameterValue = $parameterConf->getParameterValue();
 
-    public function createProxy(\Closure $func)
-    {
-        return new LazyParameterProxy($func, $this->serializer);
-    }
+        $value = $this->normalize($parameterValue);
+
+        if ( $parameterConf->mergeExisting() && isset($container[$parameterName]) ) {
+            $value = array_replace_recursive($container[$parameterName], $value);
+        }
+
+        $container[$parameterName] = $value;
+	}
 }

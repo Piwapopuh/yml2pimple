@@ -12,7 +12,7 @@ use ProxyManager\Configuration;
 use ProxyManager\Proxy\LazyLoadingInterface;
 use ProxyManager\Factory\LazyLoadingValueHolderFactory;
 
-class ProxyManagerFactory implements LazyServiceFactory
+class ServiceProxyAdapter implements ServiceProxyInterface
 {
     private $factory;
 

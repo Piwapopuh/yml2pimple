@@ -136,7 +136,7 @@ class YamlFileLoader
 
     private function parseDefinition($id, $service)
     {
-        $definition = new Definition();
+        $definition = new Definition($id);
         $definition->setFile($this->currentFile);
 
         if (isset($service['synthetic'])) {
@@ -173,7 +173,7 @@ class YamlFileLoader
         if (isset($service['factory'])) {
             $definition->setFactory($service['factory']);
         }		
-		
+
         $this->container['services'][$id] = $definition;
     }
 

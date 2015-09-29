@@ -4,7 +4,9 @@ namespace G\Yaml2Pimple;
 
 class Definition
 {
-    private $class;
+    protected $name;
+    
+    protected $class;
 
     protected $arguments;
 	
@@ -22,8 +24,9 @@ class Definition
 
 	protected $file;
 
-	public function __construct()
+	public function __construct($name)
 	{
+        $this->name = $name;
 		$this->calls = array();
 		$this->configurators = array();
 		$this->scope = 'container';
@@ -32,6 +35,11 @@ class Definition
 		$this->factory = false;
 	}
 
+    public function getName()
+    {
+        return $this->name;
+    }
+    
 	/**
 	 * @return string $file
 	 */

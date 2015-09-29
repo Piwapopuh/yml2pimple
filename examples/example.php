@@ -16,52 +16,65 @@ include __DIR__ . '/src/Test.php';
 include __DIR__ . '/src/Factory.php';
 
 use G\Yaml2Pimple\ContainerBuilder;
+
 use G\Yaml2Pimple\Loader\YamlFileLoader;
 use G\Yaml2Pimple\Loader\CacheLoader;
+
 use G\Yaml2Pimple\Normalizer\ChainNormalizer;
 use G\Yaml2Pimple\Normalizer\PimpleNormalizer;
 use G\Yaml2Pimple\Normalizer\ExpressionNormalizer;
+
 use Symfony\Component\Config\FileLocator;
 
-use G\Yaml2Pimple\Factory\ProxyManagerFactory;
+use G\Yaml2Pimple\Factory\ServiceFactory;
+use G\Yaml2Pimple\Factory\ServiceProxyAdapter;
 use G\Yaml2Pimple\Factory\ParameterFactory;
+use G\Yaml2Pimple\Factory\ProxyParameterFactory;
 
 $container      = new \Pimple();
 $builder        = new ContainerBuilder($container);
 
-$ymlLoader      = new YamlFileLoader(new FileLocator(__DIR__));
+$ymlLoader      = new YamlFileLoader(
+    new FileLocator(__DIR__)
+);
 $cacheLoader    = new CacheLoader($ymlLoader, __DIR__ . '/cache/');
 
-// load parameters lazy (try setting to false)
-$builder->setParametersLazy(true);
 // set the normalizers 
-$builder->setNormalizer(new ChainNormalizer( array(
-    new PimpleNormalizer(),
-    new ExpressionNormalizer()
-)));
-// lazy service proxy factory
-$builder->setFactory(new ProxyManagerFactory(__DIR__ . '/cache/'));
-// lazy parameter proxy factory
-$builder->setParameterFactory(new ParameterFactory());
+$builder->setNormalizer(
+    new ChainNormalizer(
+        array(
+            new PimpleNormalizer(),
+            new ExpressionNormalizer()
+        )
+    )
+);
+
+$parameterFactory   = new ProxyParameterFactory();
+$serviceFactory     = new ServiceFactory(
+    new ServiceProxyAdapter(__DIR__ . '/cache/')
+);
+
 // set our loader helper
 $builder->setLoader($cacheLoader);
+// lazy service proxy factory
+$builder->setServiceFactory($serviceFactory);
+// lazy parameter proxy factory
+$builder->setParameterFactory($parameterFactory);
 
-/*
-SerializableClosure::setExcludeFromContext('that', $builder);
-$serializer = new Serializer(new TokenAnalyzer());
-$builder->setSerializer($serializer);
-*/
 
 $then = microtime(true);
 for($i = 1; $i <= 100; $i++) {
     $builder->load('test.yml');
 }
 $now = microtime(true);
-
 echo  sprintf("Elapsed:  %f", ($now-$then));
+
+var_dump($container);
+
 $app = $container['App'];
 $app->hello();
 var_dump($app);
+
 /*
 $fn = $container->raw('name');
 
