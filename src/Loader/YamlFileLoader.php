@@ -172,7 +172,11 @@ class YamlFileLoader
 		
         if (isset($service['factory'])) {
             $definition->setFactory($service['factory']);
-        }		
+        }
+
+        if (isset($service['tags'])) {
+            $definition->setTags($service['tags']);
+        }
 
         $this->container['services'][$id] = $definition;
     }

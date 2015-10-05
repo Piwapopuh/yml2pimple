@@ -24,16 +24,35 @@ class Definition
 
 	protected $file;
 
+	protected $tags;
+
 	public function __construct($name)
 	{
-        $this->name = $name;
-		$this->calls = array();
-		$this->configurators = array();
-		$this->scope = 'container';
-		$this->lazy = false;
-		$this->synthetic = false;
-		$this->factory = false;
+        $this->name          = $name;
+        $this->calls         = array();
+        $this->configurators = array();
+        $this->scope         = 'container';
+        $this->lazy          = false;
+        $this->synthetic     = false;
+        $this->factory       = false;
+        $this->tags          = array();
 	}
+
+    /**
+     * @return array
+     */
+    public function getTags()
+    {
+        return $this->tags;
+    }
+
+    /**
+     * @param array $tags
+     */
+    public function setTags($tags)
+    {
+        $this->tags = $tags;
+    }
 
     public function getName()
     {

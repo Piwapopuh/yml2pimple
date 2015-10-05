@@ -6,10 +6,12 @@ use \G\Yaml2Pimple\Definition;
 class ServiceFactory extends AbstractServiceFactory
 {
     protected $proxyFactory;
-    
-    public function __construct($proxyFactory = null)
+    protected $definitionHandlers;
+
+    public function __construct($proxyFactory = null, $definitionHandlers = array())
     {
         $this->proxyFactory = $proxyFactory;
+        $this->definitionHandlers = $definitionHandlers;
     }
     
 	public function create(Definition $serviceConf, \Pimple &$container)
@@ -22,28 +24,33 @@ class ServiceFactory extends AbstractServiceFactory
         {
             // we dont know how to create a synthetic service, its set later
             // the classname can be a parameter reference
-            $className = $this->normalize($serviceConf->getClass(), $container);
+            $serviceConf->setClass($this->normalize($serviceConf->getClass(), $container));
             
             $that = $this;
             
             // the instantiator closure function
-            $factoryFunction = function ($c) use ($that, $serviceConf, $className)
+            $factoryFunction = function ($c) use ($that, $serviceConf)
             {
-                $instance = $that->createInstance($serviceConf, $className, $c);
+                $instance = $that->createInstance($serviceConf, $c);
                 
                 // add some method calls
                 $that->addMethodCalls($serviceConf->getCalls(), $instance, $c);
                 
                 // let another object modify this instance
                 $that->addConfigurators($serviceConf->getConfigurators(), $instance, $c);
-                
+
                 return $instance;
             };
+
+            $tags = $serviceConf->getTags();
+            foreach ($this->definitionHandlers as $handler) {
+                $handler->process($serviceConf, $tags, $container);
+            }
 
             // create a lazy proxy
             if ($serviceConf->isLazy() && !is_null($this->proxyFactory))
             {
-                $factoryFunction = $this->proxyFactory->createProxy($className, $factoryFunction);
+                $factoryFunction = $this->proxyFactory->createProxy($serviceConf->getClass(), $factoryFunction);
             }
 
             /**
@@ -59,7 +66,7 @@ class ServiceFactory extends AbstractServiceFactory
         $container[$serviceName] = $factoryFunction;
     }
 
-    public function createInstance(Definition $serviceConf, $className, $container)
+    public function createInstance(Definition $serviceConf, $container)
     {
         // decode the argument list
         $params = (array)$this->normalize($serviceConf->getArguments(), $container);
@@ -69,7 +76,7 @@ class ServiceFactory extends AbstractServiceFactory
             $instance = $this->createFromFactory($serviceConf->getFactory(), $params, $container);
         } else
         {
-            $class = new \ReflectionClass($className);
+            $class = new \ReflectionClass($serviceConf->getClass());
             // create the instance
             $instance = $class->newInstanceArgs($params);
         }
