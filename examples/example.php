@@ -26,8 +26,10 @@ use G\Yaml2Pimple\Normalizer\ExpressionNormalizer;
 
 use Symfony\Component\Config\FileLocator;
 
+use G\Yaml2Pimple\Proxy\ServiceProxyAdapter;
+use G\Yaml2Pimple\Proxy\AspectProxyAdapter;
+
 use G\Yaml2Pimple\Factory\ServiceFactory;
-use G\Yaml2Pimple\Factory\ServiceProxyAdapter;
 use G\Yaml2Pimple\Factory\ParameterFactory;
 use G\Yaml2Pimple\Factory\ProxyParameterFactory;
 
@@ -53,7 +55,9 @@ $parameterFactory   = new ProxyParameterFactory();
 $serviceFactory     = new ServiceFactory(
     new ServiceProxyAdapter(__DIR__ . '/cache/')
 );
-
+$serviceFactory->setAspectFactory(
+    new AspectProxyAdapter( __DIR__ . '/cache/')
+);
 // set our loader helper
 $builder->setLoader($cacheLoader);
 // lazy service proxy factory
@@ -72,8 +76,8 @@ echo  sprintf("Elapsed:  %f", ($now-$then));
 var_dump($container);
 
 $app = $container['App'];
-$app->hello();
-var_dump($app);
+echo $app->hello();
+//var_dump($app);
 
 /*
 $fn = $container->raw('name');

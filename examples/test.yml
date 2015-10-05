@@ -40,6 +40,8 @@ services:
         - [setDummy, ['@?Dummy']]
     # a configurator can modify the instance
     configurator: ['@Configurator', configure]
+    aspects:
+      - {pointcut: 'hello', advice:'Configurator:beforeHello'}
 
     
   Proxy:

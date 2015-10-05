@@ -6,7 +6,7 @@
  * Time: 12:58
  */
 
-namespace G\Yaml2Pimple\Factory;
+namespace G\Yaml2Pimple\Proxy;
 
 use ProxyManager\Configuration;
 use ProxyManager\Proxy\LazyLoadingInterface;

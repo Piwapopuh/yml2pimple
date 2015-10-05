@@ -26,6 +26,8 @@ class Definition
 
 	protected $tags;
 
+    protected $aspects;
+
 	public function __construct($name)
 	{
         $this->name          = $name;
@@ -36,7 +38,24 @@ class Definition
         $this->synthetic     = false;
         $this->factory       = false;
         $this->tags          = array();
+        $this->aspects       = array();
 	}
+
+    /**
+     * @return mixed
+     */
+    public function getAspects()
+    {
+        return $this->aspects;
+    }
+
+    /**
+     * @param mixed $aspects
+     */
+    public function setAspects($aspects)
+    {
+        $this->aspects = $aspects;
+    }
 
     /**
      * @return array

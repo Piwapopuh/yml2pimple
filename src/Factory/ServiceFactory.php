@@ -6,14 +6,28 @@ use \G\Yaml2Pimple\Definition;
 class ServiceFactory extends AbstractServiceFactory
 {
     protected $proxyFactory;
-    protected $definitionHandlers;
+    protected $aspectFactory;
+    protected $tagHandlers;
 
-    public function __construct($proxyFactory = null, $definitionHandlers = array())
+    public function __construct($proxyFactory = null, $tagHandler = array())
     {
-        $this->proxyFactory = $proxyFactory;
-        $this->definitionHandlers = $definitionHandlers;
+        $this->proxyFactory     = $proxyFactory;
+        $this->aspectFactory    = null;
+        $this->tagHandlers      = $tagHandler;
     }
-    
+
+    public function addTagHandler($tagHandler) {
+        $this->tagHandlers[] = $tagHandler;
+    }
+
+    /**
+     * @param mixed $aspectFactory
+     */
+    public function setAspectFactory($aspectFactory)
+    {
+        $this->aspectFactory = $aspectFactory;
+    }
+
 	public function create(Definition $serviceConf, \Pimple &$container)
 	{
         $serviceName = $serviceConf->getName();
@@ -32,7 +46,9 @@ class ServiceFactory extends AbstractServiceFactory
             $factoryFunction = function ($c) use ($that, $serviceConf)
             {
                 $instance = $that->createInstance($serviceConf, $c);
-                
+
+                $that->addAspects($serviceConf->getAspects(), $instance, $c);
+
                 // add some method calls
                 $that->addMethodCalls($serviceConf->getCalls(), $instance, $c);
                 
@@ -43,7 +59,7 @@ class ServiceFactory extends AbstractServiceFactory
             };
 
             $tags = $serviceConf->getTags();
-            foreach ($this->definitionHandlers as $handler) {
+            foreach ($this->tagHandlers as $handler) {
                 $handler->process($serviceConf, $tags, $container);
             }
 
@@ -111,5 +127,16 @@ class ServiceFactory extends AbstractServiceFactory
 			array_unshift($params, $instance);
 			call_user_func_array(array($this->normalize($configurator, $container), $method), $params);
 		}
-	}    
+	}
+
+    public function addAspects(array $aspects = array(), &$instance, $container)
+    {
+        foreach ($aspects as $aspect) {
+            $instance = $this->aspectFactory->createProxy($instance);
+            $instance = $this->aspectFactory->addAspect($instance, $aspect['pointcut'], function($methodInvocation) use ($container, $aspect) {
+                list($service, $method) = explode(":", $aspect['advice']);
+                return call_user_func(array($container[$service], $method), $methodInvocation);
+            });
+        }
+    }
 }

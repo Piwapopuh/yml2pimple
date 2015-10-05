@@ -6,7 +6,7 @@
  * Time: 13:47
  */
 
-namespace G\Yaml2Pimple\Factory;
+namespace G\Yaml2Pimple\Proxy;
 
 interface ServiceProxyInterface
 {

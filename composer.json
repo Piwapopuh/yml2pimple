@@ -27,6 +27,7 @@
 		"symfony/stopwatch": "v2.6.0",
 		"symfony/expression-language": "v2.6.0",
 		"ocramius/proxy-manager": "1.0.*",
+        "jms/cg": "1.1.*",
 		"td7650/superclosure": "dev-master"
     },
     "config": {

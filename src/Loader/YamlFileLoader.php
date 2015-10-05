@@ -178,6 +178,10 @@ class YamlFileLoader
             $definition->setTags($service['tags']);
         }
 
+        if (isset($service['aspects'])) {
+            $definition->setAspects($service['aspects']);
+        }
+
         $this->container['services'][$id] = $definition;
     }
 

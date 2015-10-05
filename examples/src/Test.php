@@ -15,4 +15,9 @@ class Test
     {
         $class->setName($this->name . ' ' . $this->else);
     }
+
+	public function beforeHello($methodInvocation) {
+		echo "captured method " . $methodInvocation->reflection->getName();
+		return $methodInvocation->proceed();
+	}
 }

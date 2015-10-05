@@ -2,6 +2,7 @@
 namespace G\Yaml2Pimple\Factory;
 
 use \G\Yaml2Pimple\Parameter;
+use \G\Yaml2Pimple\Proxy\ParameterProxyAdapter;
 
 class ProxyParameterFactory extends AbstractParameterFactory
 {

@@ -1,9 +1,8 @@
 <?php
 
-namespace G\Yaml2Pimple\Factory;
+namespace G\Yaml2Pimple\Proxy;
 
 use SuperClosure\SerializerInterface;
-use G\Yaml2Pimple\Proxy\LazyParameterProxy;
 
 class ParameterProxyAdapter implements ParameterProxyInterface
 {
