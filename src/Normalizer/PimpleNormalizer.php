@@ -24,41 +24,32 @@ class PimpleNormalizer
 			
 			$can_return_null = false;
 			$value = substr($value, 1);
-			
-			// argument is optional
-			if (0 === strpos($value, '?')) {
-				$can_return_null = true;
-				$value = substr($value, 1);
-			}
-			// our "magic" reference to the container itself
-			if ("service_container" == $value) {
-				return $container;
-			}
-			
-			// check if service is defined
-			if (!isset($container[$value]))
-			{
-				if ($can_return_null) {
-					return null;
-				} else {
-					throw new \Exception('undefined service ' . $value);
-				}
-			}
-			return $container[$value];			
+            // did we found a @@ => replace with @
+			if (0 === strpos($value, '@')) {
+                $value = str_replace('@@', '@', $value);
+            } else {
+                // argument is optional
+                if (0 === strpos($value, '?')) {
+                    $can_return_null = true;
+                    $value = substr($value, 1);
+                }
+                // our "magic" reference to the container itself
+                if ("service_container" == $value) {
+                    return $container;
+                }
+
+                // check if service is defined
+                if (!isset($container[ $value ])) {
+                    if ($can_return_null) {
+                        return null;
+                    } else {
+                        throw new \Exception('undefined service ' . $value);
+                    }
+                }
+                return $container[ $value ];
+            }
 		}
 
-        if (preg_match('{^%([a-zA-Z0-9_.]+)%$}', $value, $match)) {
-            $key = strtolower($match[1]);
-            if (false !== strpos($key, '..')) {
-                $key = '[' . str_replace('..', '][', $key) . ']';
-                if ($this->accessor->isReadable($container, $key)) {
-                    return $this->accessor->getValue($container, $key);
-                } 
-                return $match[0];
-            }                
-            return isset($container[$key]) ? $container[$key] : $match[0];
-        }
-        
         $that = $this;
 		$callback = function ($matches) use ($that, $container)
 		{
@@ -79,6 +70,6 @@ class PimpleNormalizer
 		};
 		$result = preg_replace_callback('{%%|%([a-zA-Z0-9_.]+)%}', $callback, $value, -1, $count);
 
-        return $count ? $result : $value;		
+        return $count ? $result : $value;
     }
 }
