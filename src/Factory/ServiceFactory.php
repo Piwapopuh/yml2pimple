@@ -79,6 +79,7 @@ class ServiceFactory extends AbstractServiceFactory
                 $factoryFunction = $container->share( $factoryFunction );
             }
         }
+
         $container[$serviceName] = $factoryFunction;
     }
 
@@ -99,8 +100,11 @@ class ServiceFactory extends AbstractServiceFactory
         return $instance;
     }
 
-	protected function createFromFactory(array $factory = array(), $params, $container)
+	protected function createFromFactory($factory = array(), $params, $container)
 	{
+        if (!is_array($factory)) {
+            return;
+        }        
 		list($factory, $method) = $factory;
 		$factory 	= $this->normalize($factory, $container);
 		$method 	= $this->normalize($method, $container);
@@ -108,8 +112,11 @@ class ServiceFactory extends AbstractServiceFactory
 		return call_user_func_array(array($factory, $method), $params);
 	}
 
-	public function addMethodCalls(array $calls = array(), &$instance, $container)
+	public function addMethodCalls($calls = array(), &$instance, $container)
 	{
+        if (!is_array($calls)) {
+            return;
+        }    
 		foreach ($calls as $call) {
 			list($method, $arguments) = $call;
 			$params = $this->normalize($arguments, $container);
@@ -117,8 +124,11 @@ class ServiceFactory extends AbstractServiceFactory
 		}
 	}
 
-	public function addConfigurators(array $configs = array(), &$instance, $container)
+	public function addConfigurators($configs = array(), &$instance, $container)
 	{
+        if (!is_array($configs)) {
+            return;
+        }
 		// let another object modify this instance
 		foreach ($configs as $config) {
 			$configurator 	= array_shift($config);
@@ -129,8 +139,11 @@ class ServiceFactory extends AbstractServiceFactory
 		}
 	}
 
-    public function addAspects(array $aspects = array(), &$instance, $container)
+    public function addAspects($aspects = array(), &$instance, $container)
     {
+        if (!is_array($aspects)) {
+            return;
+        }
         foreach ($aspects as $aspect) {
             $instance = $this->aspectFactory->createProxy($instance);
             $instance = $this->aspectFactory->addAspect($instance, $aspect['pointcut'], function($methodInvocation) use ($container, $aspect) {

@@ -6,11 +6,11 @@ class DefinitionTest extends \PHPUnit_Framework_TestCase
 {
     public function testDefinition()
     {
-        $definition = new Definition();
+        $definition = new Definition('Bar');
         $definition->setClass('Foo');
-        $definition->setArguments([1, 2, 3]);
+        $definition->setArguments(array(1, 2, 3));
 
         $this->assertEquals('Foo', $definition->getClass());
-        $this->assertEquals([1, 2, 3], $definition->getArguments());
+        $this->assertEquals(array(1, 2, 3), $definition->getArguments());
     }
 }

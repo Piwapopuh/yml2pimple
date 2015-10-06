@@ -10,7 +10,7 @@ class ParameterFactory extends AbstractParameterFactory
         $parameterName = $parameterConf->getParameterName();
         $parameterValue = $parameterConf->getParameterValue();
 
-        $value = $this->normalize($parameterValue);
+        $value = $this->normalize($parameterValue, $container);
 
         if ( $parameterConf->mergeExisting() && isset($container[$parameterName]) ) {
             $value = array_replace_recursive($container[$parameterName], $value);
