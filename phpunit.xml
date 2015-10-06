@@ -14,7 +14,6 @@
         stopOnIncomplete            = "false"
         stopOnSkipped               = "false"
         syntaxCheck                 = "true"
-        strict                      = "false"
         verbose                     = "true"
         bootstrap                   = "vendor/autoload.php" >
 
@@ -26,8 +25,7 @@
 
     <filter>
         <whitelist>
-            <directory>tests/</directory>
-            <directory>src/</directory>
+            <directory>*.php</directory>
         </whitelist>
     </filter>
 

@@ -18,6 +18,11 @@
             "G\\Yaml2Pimple\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "test\\": "test/"
+        }
+    },
     "require": {
         "php": ">=5.3.3",
         "pimple/pimple": "~1.0",

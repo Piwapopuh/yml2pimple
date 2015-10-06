@@ -1,13 +1,9 @@
 <?php
 
+namespace test;
+
 use G\Yaml2Pimple\ContainerBuilder;
 use G\Yaml2Pimple\Factory\ServiceFactory;
-use G\Yaml2Pimple\Factory\ParameterFactory;
-use G\Yaml2Pimple\Normalizer\PimpleNormalizer;
-
-include_once __DIR__ . '/fixtures/App.php';
-include_once __DIR__ . '/fixtures/Curl.php';
-include_once __DIR__ . '/fixtures/Proxy.php';
 
 class ContainerBuilderTest extends \PHPUnit_Framework_TestCase
 {
@@ -15,23 +11,23 @@ class ContainerBuilderTest extends \PHPUnit_Framework_TestCase
     public function testBuilder()
     {
         $parameterName = $this->getMockBuilder('G\Yaml2Pimple\Parameter')->setConstructorArgs(array('', ''))->getMock();
-        $parameterName->expects($this->any())->method('getParameterName')->will($this->returnValue('name'));
-        $parameterName->expects($this->any())->method('getParameterValue')->will($this->returnValue('Gonzalo'));
+        $parameterName->expects(static::any())->method('getParameterName')->will(static::returnValue('name'));
+        $parameterName->expects(static::any())->method('getParameterValue')->will(static::returnValue('Gonzalo'));
         
-        $definitionApp = $this->getMockBuilder('G\Yaml2Pimple\Definition')->setConstructorArgs(array('App'))->getMock();        
-        $definitionApp->expects($this->any())->method('getName')->will($this->returnValue('App'));
-        $definitionApp->expects($this->any())->method('getClass')->will($this->returnValue('App'));
-        $definitionApp->expects($this->any())->method('getArguments')->will($this->returnValue(array('@Proxy', '%name%')));
+        $definitionApp = $this->getMockBuilder('G\Yaml2Pimple\Definition')->setConstructorArgs(array('App'))->getMock();
+        $definitionApp->expects(static::any())->method('getName')->will(static::returnValue('App'));
+        $definitionApp->expects(static::any())->method('getClass')->will(static::returnValue('test\fixtures\App'));
+        $definitionApp->expects(static::any())->method('getArguments')->will(static::returnValue(array('@Proxy', '%name%')));
 
         $definitionProxy = $this->getMockBuilder('G\Yaml2Pimple\Definition')->setConstructorArgs(array('Proxy'))->getMock();
-        $definitionProxy->expects($this->any())->method('getName')->will($this->returnValue('Proxy'));
-        $definitionProxy->expects($this->any())->method('getClass')->will($this->returnValue('Proxy'));
-        $definitionProxy->expects($this->any())->method('getArguments')->will($this->returnValue(array('@Curl')));
+        $definitionProxy->expects(static::any())->method('getName')->will(static::returnValue('Proxy'));
+        $definitionProxy->expects(static::any())->method('getClass')->will(static::returnValue('test\fixtures\Proxy'));
+        $definitionProxy->expects(static::any())->method('getArguments')->will(static::returnValue(array('@Curl')));
 
         $definitionCurl = $this->getMockBuilder('G\Yaml2Pimple\Definition')->setConstructorArgs(array('Curl'))->getMock();
-        $definitionCurl->expects($this->any())->method('getName')->will($this->returnValue('Curl'));
-        $definitionCurl->expects($this->any())->method('getClass')->will($this->returnValue('Curl'));
-        $definitionCurl->expects($this->any())->method('getArguments')->will($this->returnValue(null));
+        $definitionCurl->expects(static::any())->method('getName')->will(static::returnValue('Curl'));
+        $definitionCurl->expects(static::any())->method('getClass')->will(static::returnValue('test\fixtures\Curl'));
+        $definitionCurl->expects(static::any())->method('getArguments')->will(static::returnValue(null));
 
         $conf = array(
             'parameters' => array(
@@ -58,6 +54,7 @@ class ContainerBuilderTest extends \PHPUnit_Framework_TestCase
             ->getMock();
         $builder->setParameterFactory($parameterFactory);   
 
+        /** @var ServiceFactory $serviceFactory */
         $serviceFactory = $this->getMockBuilder('G\Yaml2Pimple\Factory\ServiceFactory')
             ->setMethods(null)
             ->setMockClassName('ServiceFactory')
@@ -66,10 +63,10 @@ class ContainerBuilderTest extends \PHPUnit_Framework_TestCase
                
         $builder->buildFromArray($conf);
 
-        $this->assertInstanceOf('App', $container['App']);
-        $this->assertInstanceOf('Proxy', $container['Proxy']);
-        $this->assertInstanceOf('Curl', $container['Curl']);
+        static::assertInstanceOf('test\fixtures\App', $container['App']);
+        static::assertInstanceOf('test\fixtures\Proxy', $container['Proxy']);
+        static::assertInstanceOf('test\fixtures\Curl', $container['Curl']);
 
-        $this->assertEquals('Hello Gonzalo', $container['App']->hello());
+        static::assertEquals('Hello Gonzalo', $container['App']->hello());
     }
 }

@@ -6,13 +6,22 @@ use \Symfony\Component\PropertyAccess\PropertyAccess;
 
 class PimpleNormalizer
 {
-	public $accessor;
+    /** @var \Symfony\Component\PropertyAccess\PropertyAccessor */
+	private $accessor;
 	
     public function __construct()
     {
 		$this->accessor = PropertyAccess::createPropertyAccessor();		
-    }	
-    
+    }
+
+    /**
+     * @param $value
+     * @param $container
+     *
+     * @return mixed|null|string
+     *
+     * @throws \Exception
+     */
     public function normalize($value, $container)
     {	
 		if (!is_string($value)) {
@@ -34,7 +43,7 @@ class PimpleNormalizer
                     $value = substr($value, 1);
                 }
                 // our "magic" reference to the container itself
-                if ("service_container" == $value) {
+                if ('service_container' === strtolower($value)) {
                     return $container;
                 }
 
@@ -43,15 +52,15 @@ class PimpleNormalizer
                     if ($can_return_null) {
                         return null;
                     } else {
-                        throw new \Exception('undefined service ' . $value);
+                        throw new \RuntimeException('undefined service ' . $value);
                     }
                 }
                 return $container[ $value ];
             }
 		}
 
-        $that = $this;
-		$callback = function ($matches) use ($that, $container)
+        $accessor = $this->accessor;
+		$callback = function ($matches) use ($container, $accessor)
 		{
 			if (!isset($matches[1])) {
 				return '%%';
@@ -61,8 +70,8 @@ class PimpleNormalizer
             
             if (false !== strpos($key, '..')) {
                 $key = '[' . str_replace('..', '][', $key) . ']';
-                if ($that->accessor->isReadable($container, $key)) {
-                    return $that->accessor->getValue($container, $key);
+                if ($accessor->isReadable($container, $key)) {
+                    return $accessor->getValue($container, $key);
                 } 
                 return $matches[0];
             }              

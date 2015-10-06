@@ -1,5 +1,7 @@
 <?php
 
+namespace test\fixtures;
+
 class Proxy
 {
     private $curl;
