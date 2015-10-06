@@ -59,6 +59,18 @@ class PimpleNormalizer
             }
 		}
 
+        if (preg_match('{^%([a-zA-Z0-9_.]+)%$}', $value, $match)) {
+            $key = strtolower($match[1]);
+            if (false !== strpos($key, '..')) {
+                $key = '[' . str_replace('..', '][', $key) . ']';
+                if ($this->accessor->isReadable($container, $key)) {
+                    return $this->accessor->getValue($container, $key);
+                }
+                return $match[0];
+            }                
+            return isset($container[$key]) ? $container[$key] : $match[0];
+        }
+
         $accessor = $this->accessor;
 		$callback = function ($matches) use ($container, $accessor)
 		{
