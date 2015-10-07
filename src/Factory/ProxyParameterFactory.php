@@ -36,7 +36,7 @@ class ProxyParameterFactory extends AbstractParameterFactory
         $this->nestedLevel[$name] = $nestedLevel;
     }
     
-	public function create(Parameter $parameterConf, \Pimple &$container)
+	public function create(Parameter $parameterConf, \Pimple $container)
 	{
         $parameterName = $parameterConf->getParameterName();
         $parameterValue = $parameterConf->getParameterValue();
@@ -76,5 +76,6 @@ class ProxyParameterFactory extends AbstractParameterFactory
         }
         
         $container[$parameterName] = $value;
+        return $container;
     }
 }

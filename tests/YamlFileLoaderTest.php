@@ -1,10 +1,8 @@
 <?php
 
-use G\Yaml2Pimple\Loader\YamlFileLoader;
+namespace test;
 
-include_once __DIR__ . '/fixtures/App.php';
-include_once __DIR__ . '/fixtures/Curl.php';
-include_once __DIR__ . '/fixtures/Proxy.php';
+use G\Yaml2Pimple\Loader\YamlFileLoader;
 
 class YamlFileLoaderTest extends \PHPUnit_Framework_TestCase
 {
@@ -12,31 +10,51 @@ class YamlFileLoaderTest extends \PHPUnit_Framework_TestCase
     {
 
         $locator = $this->getMockBuilder('Symfony\Component\Config\FileLocatorInterface')->disableOriginalConstructor()->getMock();
-        $locator->expects($this->any())->method('locate')->will($this->returnValue(__DIR__ . '/fixtures/services.yml'));
+        $locator->expects(static::any())
+                ->method('locate')
+                ->will(static::returnValue(__DIR__ . '/fixtures/services.yml'));
 
+        /** @var \Symfony\Component\Config\FileLocatorInterface $locator */
         $loader = new YamlFileLoader($locator);
         $conf = $loader->load('services.yml');
-        
-        $this->assertArrayHasKey('parameters', $conf);
-        $this->assertArrayHasKey('parameters', $conf);
-        $this->assertCount(1, $conf['parameters']);
-        $this->assertEquals('Gonzalo', $conf['parameters'][0]->getParameterValue());
 
-        $this->assertArrayHasKey('services', $conf);
-        $this->assertArrayHasKey('App', $conf['services']);
-        $this->assertArrayHasKey('Curl', $conf['services']);
-        $this->assertArrayHasKey('Proxy', $conf['services']);
+        static::assertInternalType('array', $conf);
 
-        $this->assertInstanceOf('G\Yaml2Pimple\Definition', $conf['services']['App']);
-        $this->assertInstanceOf('G\Yaml2Pimple\Definition', $conf['services']['Curl']);
-        $this->assertInstanceOf('G\Yaml2Pimple\Definition', $conf['services']['Proxy']);
+        static::assertArrayHasKey('parameters', $conf);
+        static::assertCount(1, $conf['parameters']);
 
-        $this->assertEquals('App', $conf['services']['App']->getClass());
-        $this->assertEquals(array('@Proxy', '%name%'), $conf['services']['App']->getArguments());
-        $this->assertEquals('Curl', $conf['services']['Curl']->getClass());
-        $this->assertEquals(null, $conf['services']['Curl']->getArguments());
-        $this->assertEquals('Proxy', $conf['services']['Proxy']->getClass());
-        $this->assertEquals(array('@Curl'), $conf['services']['Proxy']->getArguments());
+        $parameter = $conf['parameters'][0];
+
+        static::assertInstanceOf('G\Yaml2Pimple\Parameter', $parameter);
+
+        /** @var \G\Yaml2Pimple\Parameter $parameter */
+
+        static::assertEquals('name', $parameter->getParameterName());
+        static::assertEquals('Gonzalo', $parameter->getParameterValue());
+
+        static::assertArrayHasKey('services', $conf);
+        static::assertArrayHasKey('App', $conf['services']);
+        static::assertArrayHasKey('Curl', $conf['services']);
+        static::assertArrayHasKey('Proxy', $conf['services']);
+
+        $app    = $conf['services']['App'];
+        $curl   = $conf['services']['Curl'];
+        $proxy  = $conf['services']['Proxy'];
+
+        static::assertInstanceOf('G\Yaml2Pimple\Definition', $app);
+        static::assertInstanceOf('G\Yaml2Pimple\Definition', $curl);
+        static::assertInstanceOf('G\Yaml2Pimple\Definition', $proxy);
+
+        /** @var \G\Yaml2Pimple\Definition $app */
+        /** @var \G\Yaml2Pimple\Definition $curl */
+        /** @var \G\Yaml2Pimple\Definition $proxy */
+
+        static::assertEquals('App', $app->getClass());
+        static::assertEquals(array('@Proxy', '%name%'), $app->getArguments());
+        static::assertEquals('Curl', $curl->getClass());
+        static::assertEquals(null, $curl->getArguments());
+        static::assertEquals('Proxy', $proxy->getClass());
+        static::assertEquals(array('@Curl'), $proxy->getArguments());
         
     }
 }

@@ -28,7 +28,7 @@ class ServiceFactory extends AbstractServiceFactory
         $this->aspectFactory = $aspectFactory;
     }
 
-	public function create(Definition $serviceConf, \Pimple &$container)
+	public function create(Definition $serviceConf, \Pimple $container)
 	{
         $serviceName = $serviceConf->getName();
         
@@ -81,6 +81,7 @@ class ServiceFactory extends AbstractServiceFactory
         }
 
         $container[$serviceName] = $factoryFunction;
+        return $container;
     }
 
     public function createInstance(Definition $serviceConf, $container)
@@ -93,6 +94,7 @@ class ServiceFactory extends AbstractServiceFactory
             $instance = $this->createFromFactory($serviceConf->getFactory(), $params, $container);
         } else
         {
+            echo ">>".$serviceConf->getClass()."<<";
             $class = new \ReflectionClass($serviceConf->getClass());
             // create the instance
             $instance = $class->newInstanceArgs($params);

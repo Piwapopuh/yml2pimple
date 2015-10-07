@@ -5,5 +5,5 @@ use \G\Yaml2Pimple\Parameter;
 
 abstract class AbstractParameterFactory extends AbstractFactory
 {
-	abstract public function create(Parameter $parameterConf, \Pimple &$container);
+	abstract public function create(Parameter $parameterConf, \Pimple $container);
 }

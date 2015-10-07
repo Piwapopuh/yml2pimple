@@ -1,5 +1,7 @@
 <?php
 
+namespace test;
+
 use G\Yaml2Pimple\Definition;
 
 class DefinitionTest extends \PHPUnit_Framework_TestCase
@@ -10,7 +12,7 @@ class DefinitionTest extends \PHPUnit_Framework_TestCase
         $definition->setClass('Foo');
         $definition->setArguments(array(1, 2, 3));
 
-        $this->assertEquals('Foo', $definition->getClass());
-        $this->assertEquals(array(1, 2, 3), $definition->getArguments());
+        static::assertEquals('Foo', $definition->getClass());
+        static::assertEquals(array(1, 2, 3), $definition->getArguments());
     }
 }

@@ -5,7 +5,7 @@ use \G\Yaml2Pimple\Parameter;
 
 class ParameterFactory extends AbstractParameterFactory
 {   
-	public function create(Parameter $parameterConf, \Pimple &$container)
+	public function create(Parameter $parameterConf, \Pimple $container)
 	{
         $parameterName = $parameterConf->getParameterName();
         $parameterValue = $parameterConf->getParameterValue();
@@ -17,5 +17,6 @@ class ParameterFactory extends AbstractParameterFactory
         }
 
         $container[$parameterName] = $value;
+        return $container;
 	}
 }

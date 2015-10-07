@@ -24,7 +24,7 @@ parameters:
   $combined2: '<p>Lazy Parameter example2: %fragment1% %fragment2%</p>'
   $_normalize:
     test: @service_container
-  
+
 services:
   App:
     # class names can reference parameters

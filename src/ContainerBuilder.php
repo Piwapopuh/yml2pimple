@@ -12,12 +12,12 @@ class ContainerBuilder
 	private $normalizer;
 
     /**
-     * @var LazyServiceFactory $factory
+     * @var AbstractServiceFactory $factory
      */
     private $serviceFactory;
 
     /**
-     * @var LazyParameterFactory $parameterFactory
+     * @var AbstractParameterFactory $parameterFactory
      */
     private $parameterFactory;
     private $serializer;
@@ -29,7 +29,7 @@ class ContainerBuilder
     }
 
     /**
-     * @param mixed $parameterFactory
+     * @param AbstractParameterFactory $parameterFactory
      */
     public function setParameterFactory(AbstractParameterFactory $parameterFactory)
     {
@@ -96,21 +96,21 @@ class ContainerBuilder
 
     public function buildFromArray($conf)
     {
-		if (is_null($this->normalizer)) {
+		if ( null === $this->normalizer ) {
 			$this->addDefaultNormalizer();
 		}
-        
+
         foreach ($conf['parameters'] as $parameterConf)
         {
             if ($parameterConf instanceof Parameter) {
-                $this->parameterFactory->create($parameterConf, $this->container);
+                $this->container = $this->parameterFactory->create($parameterConf, $this->container);
             }
         }	
 		
         foreach ($conf['services'] as $serviceName => $serviceConf)
 		{
             if ($serviceConf instanceof Definition) {
-                $this->serviceFactory->create($serviceConf, $this->container);
+                $this->container = $this->serviceFactory->create($serviceConf, $this->container);
             }
         }
     }

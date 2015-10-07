@@ -23,6 +23,13 @@ class YamlFileLoader
         $this->locator = $fileLocator;
     }
 
+    /**
+     * @param $file
+     * @param bool|false $isImport
+     *
+     * @return array
+     *
+     */
     public function load($file, $isImport = false)
     {
         if (!$isImport) {
@@ -35,7 +42,7 @@ class YamlFileLoader
         $content = $this->loadFile($path);
 
         if (null === $content) {
-            return;
+            return array();
         }
 
         $this->parseImports($content, $path);

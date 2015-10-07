@@ -67,7 +67,7 @@ class PimpleNormalizer
                     return $this->accessor->getValue($container, $key);
                 }
                 return $match[0];
-            }                
+            }
             return isset($container[$key]) ? $container[$key] : $match[0];
         }
 
