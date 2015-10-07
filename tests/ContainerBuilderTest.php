@@ -8,10 +8,37 @@ use G\Yaml2Pimple\Factory\ParameterFactory;
 
 class ContainerBuilderTest extends \PHPUnit_Framework_TestCase
 {
-    private function getNormalizerStub()
+
+    private function getServiceFactoryStub($methods = null)
     {
+        if (is_string($methods)) {
+            $methods = array($methods);
+        }
+
+        return static::getMockBuilder('G\Yaml2Pimple\Factory\ServiceFactory')
+            ->setMethods($methods)
+            ->getMock();
+    }
+
+    private function getParameterFactoryStub($methods = null)
+    {
+        if (is_string($methods)) {
+            $methods = array($methods);
+        }
+
+        return static::getMockBuilder('G\Yaml2Pimple\Factory\ParameterFactory')
+            ->setMethods($methods)
+            ->getMock();
+    }
+
+    private function getNormalizerStub($methods = null)
+    {
+        if (is_string($methods)) {
+            $methods = array($methods);
+        }
+
         return static::getMockBuilder('G\Yaml2Pimple\Normalizer\PimpleNormalizer')
-            ->setMethods(null)
+            ->setMethods($methods)
             ->getMock();
     }
 
@@ -56,15 +83,11 @@ class ContainerBuilderTest extends \PHPUnit_Framework_TestCase
     public function testSetParameterFactory()
     {
         $builder = new ContainerBuilder($this->getContainer());
-
-        $normalizer = $this->getNormalizerStub();
-
         // set the normalizers
+        $normalizer = $this->getNormalizerStub();
         $builder->setNormalizer($normalizer);
         
-        $parameterFactory = static::getMockBuilder('G\Yaml2Pimple\Factory\ParameterFactory')
-            ->setMethods(array('setNormalizer'))
-            ->getMock();
+        $parameterFactory = $this->getParameterFactoryStub('setNormalizer');
 
         $parameterFactory->expects(static::once())
             ->method('setNormalizer')
@@ -77,15 +100,11 @@ class ContainerBuilderTest extends \PHPUnit_Framework_TestCase
     public function testSetServiceFactory()
     {
         $builder = new ContainerBuilder($this->getContainer());
-
-        $normalizer = $this->getNormalizerStub();
-
         // set the normalizers
+        $normalizer = $this->getNormalizerStub();
         $builder->setNormalizer($normalizer);
 
-        $serviceFactory = static::getMockBuilder('G\Yaml2Pimple\Factory\ServiceFactory')
-            ->setMethods(array('setNormalizer'))
-            ->getMock();
+        $serviceFactory = $this->getServiceFactoryStub('setNormalizer');
 
         $serviceFactory->expects(static::once())
             ->method('setNormalizer')
@@ -113,7 +132,7 @@ class ContainerBuilderTest extends \PHPUnit_Framework_TestCase
             ->disableOriginalConstructor()
             ->setMethods(array('buildFromArray'))
             ->getMock();
-        
+
         $builder->expects(static::once())
             ->method('buildFromArray')
             ->with(static::identicalTo($conf));
@@ -133,18 +152,14 @@ class ContainerBuilderTest extends \PHPUnit_Framework_TestCase
         $normalizer = $this->getNormalizerStub();
         $builder->setNormalizer($normalizer);
 
-        $parameterFactory = static::getMockBuilder('G\Yaml2Pimple\Factory\ParameterFactory')
-            ->setMethods(array('create'))
-            ->getMock();
+        $parameterFactory = $this->getParameterFactoryStub('create');
 
         $parameterFactory->expects(static::once())
             ->method('create')
             ->with(static::identicalTo($conf['parameters']['name']), static::identicalTo($container))
             ->will(static::returnArgument(1));
 
-        $serviceFactory = static::getMockBuilder('G\Yaml2Pimple\Factory\ServiceFactory')
-            ->setMethods(array('create'))
-            ->getMock();
+        $serviceFactory = $this->getServiceFactoryStub('create');
 
         $serviceFactory->expects(static::exactly(3))
             ->method('create')
