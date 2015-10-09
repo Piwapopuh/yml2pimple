@@ -20,7 +20,7 @@ class EventListenerTagHandler implements TagHandlerInterface
     public function process(Definition $serviceConf, array $tags, \Pimple $container) {
         foreach ($tags as $tag)
         {
-            if ($tag['name'] == 'konfigurator.event_listener')
+            if (strtolower($tag['name']) === 'konfigurator.event_listener')
             {
                 $container[$this->dispatcher] = $container->extend($this->dispatcher, function ($dispatcher, $c) use ($serviceConf, $tag)
                 {
@@ -31,6 +31,7 @@ class EventListenerTagHandler implements TagHandlerInterface
                         if (isset($c[$service])) {
                             return call_user_func_array(array($c[$service], $method), func_get_args());
                         }
+                        return false;
                     });
 
                     return $dispatcher;

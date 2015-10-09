@@ -125,7 +125,14 @@ class Definition
         return is_array($this->arguments) && count($this->arguments) > 0;
     }
 
-	public function addCall(array $call)
+    public function addCalls(array $calls)
+    {
+        $this->calls = $calls;
+
+        return $this;
+	}
+
+    public function addCall(array $call)
 	{
 		$this->calls[] = $call;
 		

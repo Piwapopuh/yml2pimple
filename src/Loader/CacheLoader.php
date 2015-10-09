@@ -18,7 +18,7 @@ class CacheLoader
     public function __construct($loader, $cacheDir = null)
     {
         $this->loader = $loader;
-        if (is_null($cacheDir)) {
+        if (null === $cacheDir) {
             $cacheDir = sys_get_temp_dir();
         }
         $this->cacheDir = $cacheDir;
@@ -43,10 +43,8 @@ class CacheLoader
 
         if (file_exists($this->cacheFile)) {
             $conf = include $this->cacheFile;
-            if (isset($conf['resources'])) {
-                if ($this->isFresh($conf['resources'])) {
-                    return $conf;
-                }
+            if (isset($conf['resources']) && $this->isFresh($conf['resources'])) {
+                return $conf;
             }
         }
         $conf = $this->loader->load($file);
@@ -56,7 +54,7 @@ class CacheLoader
         return $conf;
     }
 
-    protected function isFresh($resources = array())
+    protected function isFresh(array $resources = array())
     {
         foreach($resources as $resource) {
             if (filemtime($resource) > filemtime($this->cacheFile)) {

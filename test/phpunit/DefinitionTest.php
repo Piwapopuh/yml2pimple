@@ -19,10 +19,12 @@ class DefinitionTest extends \PHPUnit_Framework_TestCase
         static::assertTrue($definition->hasArguments());
         static::assertEquals($arguments, $definition->getArguments());
 
-        $call = array('method', array(1,2));
+        $calls = array(
+            array('method', array(1,2))
+        );
         static::assertFalse($definition->hasCalls());
-        $definition->addCall($call);
+        $definition->addCalls($calls);
         static::assertTrue($definition->hasCalls());
-        static::assertEquals(array($call), $definition->getCalls());
+        static::assertEquals($calls, $definition->getCalls());
     }
 }

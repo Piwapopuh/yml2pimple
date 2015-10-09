@@ -17,14 +17,14 @@ class ServiceProxyAdapter implements ServiceProxyInterface
     private $factory;
 
     /**
-     * ProxyManagerFactory constructor.
+     * @param mixed $cacheDir
      */
     public function __construct($cacheDir = null)
     {
         // set a proxy cache for performance tuning
         $config = new Configuration();
 
-        if (!is_null($cacheDir)) {
+        if (null !== $cacheDir) {
             $config->setProxiesTargetDir($cacheDir);
         }
         // then register the autoloader
@@ -35,7 +35,7 @@ class ServiceProxyAdapter implements ServiceProxyInterface
 
     public function createProxy($className, \Closure $func)
     {
-        if (is_null($this->factory)) {
+        if (null === $this->factory) {
             return $func;
         }
 

@@ -6,19 +6,9 @@ use Prophecy\Argument;
 
 use G\Yaml2Pimple\ContainerBuilder;
 use G\Yaml2Pimple\Loader\YamlFileLoader;
-use G\Yaml2Pimple\Loader\CacheLoader;
-
-use G\Yaml2Pimple\Normalizer\ChainNormalizer;
 use G\Yaml2Pimple\Normalizer\PimpleNormalizer;
-use G\Yaml2Pimple\Normalizer\ExpressionNormalizer;
-
 use Symfony\Component\Config\FileLocator;
-
-use G\Yaml2Pimple\Proxy\ServiceProxyAdapter;
-use G\Yaml2Pimple\Proxy\AspectProxyAdapter;
-
 use G\Yaml2Pimple\Factory\ServiceFactory;
-use G\Yaml2Pimple\Factory\ParameterFactory;
 use G\Yaml2Pimple\Factory\ProxyParameterFactory;
 
 class ContainerBuilderTest extends \PHPUnit_Framework_TestCase

@@ -3,10 +3,8 @@
 namespace G\Yaml2Pimple\Loader;
 
 use Symfony\Component\Config\FileLocatorInterface;
-use Symfony\Component\Config\Loader\Loader;
 use Symfony\Component\Yaml\Parser as YamlParser;
 
-use G\Yaml2Pimple\ContainerBuilder;
 use G\Yaml2Pimple\Definition;
 use G\Yaml2Pimple\Parameter;
 
@@ -37,8 +35,15 @@ class YamlFileLoader
             $this->currentFile = $file;
         }
 
-        $path = $this->locator->locate($file);
-        $content = $this->loadFile($path);
+        $path = null;
+        $content = null;
+
+        try {
+            $path = $this->locator->locate($file);
+            $content = $this->loadFile($path);
+        } catch (\InvalidArgumentException $e) {
+            //
+        }
 
         if (null === $content) {
             return array();
@@ -51,7 +56,7 @@ class YamlFileLoader
         return $this->container;
     }
 
-    public function supports($resource, $type=null)
+    public function supports($resource)
     {
         return is_string($resource) && 'yml' === pathinfo($resource, PATHINFO_EXTENSION);
     }
@@ -83,12 +88,6 @@ class YamlFileLoader
             throw new \InvalidArgumentException(sprintf('The service file "%s" is not valid.', $file));
         }
 
-        foreach (array_keys($content) as $namespace) {
-            if (in_array($namespace, array('ingredients', 'basePrice'))) {
-                continue;
-            }
-        }
-
         return $content;
     }
 
@@ -98,10 +97,10 @@ class YamlFileLoader
             return;
         }
 
+        $this->setCurrentDir(dirname($file));
+
         foreach ($content['imports'] as $import)
         {
-            $this->setCurrentDir(dirname($file));
-
             $resource = $import['resource'];
 
             if (!$this->isAbsolutePath($resource)) {
@@ -167,10 +166,7 @@ class YamlFileLoader
         }
 
         if (isset($service['calls'])) {
-			foreach((array)$service['calls'] as $call)
-			{
-				$definition->addCall($call);
-			}
+    		$definition->addCalls($service['calls']);
         }		
 
 		if (isset($service['configurator'])) {
