@@ -15,12 +15,13 @@
     ],
     "autoload": {
         "psr-4": {
-            "G\\Yaml2Pimple\\": "src/"
+            "G\\Yaml2Pimple\\": "src/",
+            "test\\": "test/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "test\\": "tests/"
+            "test\\": "test/"
         }
     },
     "require": {

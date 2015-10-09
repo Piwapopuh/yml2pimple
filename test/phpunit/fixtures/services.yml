@@ -3,10 +3,12 @@ parameters:
 
 services:
   App:
-    class:     App
+    class:     \test\fixtures\App
     arguments: [@Proxy, %name%]
+
   Proxy:
-    class:     Proxy
+    class:     \test\fixtures\Proxy
     arguments: [@Curl]
+
   Curl:
-    class:     Curl
+    class:     \test\fixtures\Curl

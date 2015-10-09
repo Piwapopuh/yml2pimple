@@ -18,8 +18,8 @@
         bootstrap                   = "vendor/autoload.php" >
 
     <testsuites>
-        <testsuite name="tests">
-            <directory>tests/phpunit/</directory>
+        <testsuite name="test">
+            <directory>test/phpunit/</directory>
         </testsuite>
     </testsuites>
 

@@ -12,10 +12,9 @@ class ProxyParameterFactory extends AbstractParameterFactory
 
     public function __construct($proxyFactory = null)
     {
-        if (is_null($proxyFactory)) {
+        $this->proxyFactory = $proxyFactory;
+        if (null === $proxyFactory) {
             $this->proxyFactory = new ParameterProxyAdapter();
-        } else {
-            $this->proxyFactory = $proxyFactory;
         }
         $this->nestedLevel      = array();
         $this->maxNestedLevel   = 50;
@@ -55,7 +54,7 @@ class ProxyParameterFactory extends AbstractParameterFactory
 
         $nestedLevel = $this->getNestedLevel($parameterName);
         // merge existing data per default
-        if ($parameterConf->mergeExisting() && $nestedLevel < $this->maxNestedLevel && isset($container[$parameterName]) )
+        if ($nestedLevel < $this->maxNestedLevel && isset($container[$parameterName]) && $parameterConf->mergeExisting() )
         {
             // avoid too deep nested level closures
             $this->setNestedLevel($parameterName, $nestedLevel + 1);

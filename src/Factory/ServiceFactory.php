@@ -2,18 +2,30 @@
 namespace G\Yaml2Pimple\Factory;
 
 use \G\Yaml2Pimple\Definition;
+use \G\Yaml2Pimple\Proxy\AspectProxyInterface;
+use \G\Yaml2Pimple\Proxy\ServiceProxyInterface;
+use \G\Yaml2Pimple\Handler\TagHandlerInterface;
 
 class ServiceFactory extends AbstractServiceFactory
 {
+    /** @var ServiceProxyInterface $proxyFactory */
     protected $proxyFactory;
+
+    /** @var AspectProxyInterface $aspectFactory */
     protected $aspectFactory;
+
+    /** @var  array $tagHandlers */
     protected $tagHandlers;
 
-    public function __construct($proxyFactory = null, $tagHandler = array())
+    /**
+     * @param ServiceProxyInterface $proxyFactory
+     * @param array $tagHandlers
+    */
+    public function __construct($proxyFactory = null, array $tagHandlers = array())
     {
         $this->proxyFactory     = $proxyFactory;
         $this->aspectFactory    = null;
-        $this->tagHandlers      = $tagHandler;
+        $this->tagHandlers      = $tagHandlers;
     }
 
     public function addTagHandler($tagHandler) {
@@ -21,7 +33,7 @@ class ServiceFactory extends AbstractServiceFactory
     }
 
     /**
-     * @param mixed $aspectFactory
+     * @param AspectProxyInterface $aspectFactory
      */
     public function setAspectFactory($aspectFactory)
     {
@@ -41,30 +53,40 @@ class ServiceFactory extends AbstractServiceFactory
             $serviceConf->setClass($this->normalize($serviceConf->getClass(), $container));
             
             $that = $this;
-            
+            $aspectFactory = $this->aspectFactory;
+
             // the instantiator closure function
-            $factoryFunction = function ($c) use ($that, $serviceConf)
+            $factoryFunction = function ($c) use ($that, $serviceConf, $aspectFactory)
             {
                 $instance = $that->createInstance($serviceConf, $c);
-
-                $that->addAspects($serviceConf->getAspects(), $instance, $c);
+                // add aspects
+                if (null !== $aspectFactory && $serviceConf->hasAspects()) {
+                    $that->addAspects($serviceConf->getAspects(), $instance, $c);
+                }
 
                 // add some method calls
-                $that->addMethodCalls($serviceConf->getCalls(), $instance, $c);
-                
+                if ($serviceConf->hasCalls()) {
+                    $that->addMethodCalls($serviceConf->getCalls(), $instance, $c);
+                }
+
                 // let another object modify this instance
-                $that->addConfigurators($serviceConf->getConfigurators(), $instance, $c);
+                if ($serviceConf->hasConfigurators()) {
+                    $that->addConfigurators($serviceConf->getConfigurators(), $instance, $c);
+                }
 
                 return $instance;
             };
 
-            $tags = $serviceConf->getTags();
-            foreach ($this->tagHandlers as $handler) {
-                $handler->process($serviceConf, $tags, $container);
+            if ($serviceConf->hasTags()) {
+                $tags = $serviceConf->getTags();
+                /** @var TagHandlerInterface $handler */
+                foreach ($this->tagHandlers as $handler) {
+                    $handler->process($serviceConf, $tags, $container);
+                }
             }
 
             // create a lazy proxy
-            if ($serviceConf->isLazy() && !is_null($this->proxyFactory))
+            if (null !== $this->proxyFactory && $serviceConf->isLazy())
             {
                 $factoryFunction = $this->proxyFactory->createProxy($serviceConf->getClass(), $factoryFunction);
             }
@@ -74,7 +96,7 @@ class ServiceFactory extends AbstractServiceFactory
              * new instance of it. If you want the same instance to be returned
              * for all calls, wrap your anonymous function with the share() method
              **/
-            if ( "container" == $serviceConf->getScope() )
+            if ( 'container' === strtolower($serviceConf->getScope()) )
             {
                 $factoryFunction = $container->share( $factoryFunction );
             }
@@ -89,7 +111,7 @@ class ServiceFactory extends AbstractServiceFactory
         // decode the argument list
         $params = (array)$this->normalize($serviceConf->getArguments(), $container);
 
-        if ($serviceConf->hasFactory())
+        if ( $serviceConf->hasFactory() )
         {
             $instance = $this->createFromFactory($serviceConf->getFactory(), $params, $container);
         } else
@@ -101,11 +123,8 @@ class ServiceFactory extends AbstractServiceFactory
         return $instance;
     }
 
-	protected function createFromFactory($factory = array(), $params, $container)
+	protected function createFromFactory(array $factory = array(), $params, $container)
 	{
-        if (!is_array($factory)) {
-            return;
-        }        
 		list($factory, $method) = $factory;
 		$factory 	= $this->normalize($factory, $container);
 		$method 	= $this->normalize($method, $container);
@@ -113,11 +132,8 @@ class ServiceFactory extends AbstractServiceFactory
 		return call_user_func_array(array($factory, $method), $params);
 	}
 
-	public function addMethodCalls($calls = array(), &$instance, $container)
+	public function addMethodCalls(array $calls = array(), $instance, $container)
 	{
-        if (!is_array($calls)) {
-            return;
-        }    
 		foreach ($calls as $call) {
 			list($method, $arguments) = $call;
 			$params = $this->normalize($arguments, $container);
@@ -125,30 +141,24 @@ class ServiceFactory extends AbstractServiceFactory
 		}
 	}
 
-	public function addConfigurators($configs = array(), &$instance, $container)
+	public function addConfigurators(array $configs = array(), $instance, $container)
 	{
-        if (!is_array($configs)) {
-            return;
-        }
 		// let another object modify this instance
 		foreach ($configs as $config) {
 			$configurator 	= array_shift($config);
 			$method 		= array_shift($config);
 			$params 		= $this->normalize($config, $container);
-			array_unshift($params, $instance);
+			array_merge($params, $instance);
 			call_user_func_array(array($this->normalize($configurator, $container), $method), $params);
 		}
 	}
 
-    public function addAspects($aspects = array(), &$instance, $container)
+    public function addAspects(array $aspects = array(), $instance, $container)
     {
-        if (!is_array($aspects)) {
-            return;
-        }
+        $instance = $this->aspectFactory->createProxy($instance);
         foreach ($aspects as $aspect) {
-            $instance = $this->aspectFactory->createProxy($instance);
             $instance = $this->aspectFactory->addAspect($instance, $aspect['pointcut'], function($methodInvocation) use ($container, $aspect) {
-                list($service, $method) = explode(":", $aspect['advice']);
+                list($service, $method) = explode(':', $aspect['advice']);
                 return call_user_func(array($container[$service], $method), $methodInvocation);
             });
         }

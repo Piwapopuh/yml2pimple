@@ -8,37 +8,29 @@ class Definition
     
     protected $class;
 
-    protected $arguments;
+    protected $arguments = array();
 	
-	protected $calls;
+	protected $calls = array();
 	
-	protected $configurators;
+	protected $configurators = array();
 
-	protected $scope;
+	protected $scope = 'container';
 	
-	protected $lazy;
+	protected $lazy = false;
 	
-	protected $synthetic;
+	protected $synthetic = false;
 	
-	protected $factory;
+	protected $factory = array();
 
 	protected $file;
 
-	protected $tags;
+	protected $tags = array();
 
-    protected $aspects;
+    protected $aspects = array();
 
 	public function __construct($name)
 	{
         $this->name          = $name;
-        $this->calls         = array();
-        $this->configurators = array();
-        $this->scope         = 'container';
-        $this->lazy          = false;
-        $this->synthetic     = false;
-        $this->factory       = false;
-        $this->tags          = array();
-        $this->aspects       = array();
 	}
 
     /**
@@ -57,6 +49,11 @@ class Definition
         $this->aspects = $aspects;
     }
 
+    public function hasAspects()
+    {
+        return is_array($this->aspects) && count($this->aspects) > 0;
+    }
+
     /**
      * @return array
      */
@@ -71,6 +68,11 @@ class Definition
     public function setTags($tags)
     {
         $this->tags = $tags;
+    }
+
+    public function hasTags()
+    {
+        return is_array($this->tags) && count($this->tags) > 0;
     }
 
     public function getName()
@@ -117,7 +119,12 @@ class Definition
     {
         return $this->arguments;
     }
-	
+
+    public function hasArguments()
+    {
+        return is_array($this->arguments) && count($this->arguments) > 0;
+    }
+
 	public function addCall(array $call)
 	{
 		$this->calls[] = $call;
@@ -129,6 +136,11 @@ class Definition
 	{
 		return $this->calls;
 	}
+
+    public function hasCalls()
+    {
+        return is_array($this->calls) && count($this->calls) > 0;
+    }
 	
 	public function addConfigurator($config)
 	{
@@ -141,7 +153,12 @@ class Definition
 	{
 		return $this->configurators;
 	}
-	
+
+    public function hasConfigurators()
+    {
+        return is_array($this->configurators) && count($this->configurators) > 0;
+    }
+
 	public function setScope($scope)
 	{
 		$this->scope = $scope;
@@ -192,7 +209,7 @@ class Definition
 	
     public function hasFactory()
     {
-        return !empty($this->factory);
+        return is_array($this->factory) && count($this->factory) > 0;
     }	
     
     public function _set($array) 
@@ -204,7 +221,7 @@ class Definition
     
     public static function __set_state($array)
     {
-        $obj = new Definition;
+        $obj = new Definition($array['name']);
         $obj->_set($array);
         return $obj;
     }

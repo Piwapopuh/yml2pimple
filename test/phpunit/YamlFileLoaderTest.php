@@ -48,11 +48,11 @@ class YamlFileLoaderTest extends \PHPUnit_Framework_TestCase
         /** @var \G\Yaml2Pimple\Definition $curl */
         /** @var \G\Yaml2Pimple\Definition $proxy */
 
-        static::assertEquals('App', $app->getClass());
+        static::assertEquals('\test\fixtures\App', $app->getClass());
         static::assertEquals(array('@Proxy', '%name%'), $app->getArguments());
-        static::assertEquals('Curl', $curl->getClass());
-        static::assertEquals(null, $curl->getArguments());
-        static::assertEquals('Proxy', $proxy->getClass());
+        static::assertEquals('\test\fixtures\Curl', $curl->getClass());
+        static::assertEquals(array(), $curl->getArguments());
+        static::assertEquals('\test\fixtures\Proxy', $proxy->getClass());
         static::assertEquals(array('@Curl'), $proxy->getArguments());
         
     }
