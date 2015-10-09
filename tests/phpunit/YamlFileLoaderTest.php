@@ -2,17 +2,16 @@
 
 namespace test;
 
+use Prophecy\Argument;
 use G\Yaml2Pimple\Loader\YamlFileLoader;
 
 class YamlFileLoaderTest extends \PHPUnit_Framework_TestCase
 {
     public function testLoader()
     {
-
-        $locator = $this->getMockBuilder('Symfony\Component\Config\FileLocatorInterface')->disableOriginalConstructor()->getMock();
-        $locator->expects(static::any())
-                ->method('locate')
-                ->will(static::returnValue(__DIR__ . '/fixtures/services.yml'));
+        $prophecy = $this->prophesize('Symfony\Component\Config\FileLocatorInterface');
+        $prophecy->locate(Argument::type('string'))->willReturn(__DIR__ . '/fixtures/services.yml');
+        $locator = $prophecy->reveal();
 
         /** @var \Symfony\Component\Config\FileLocatorInterface $locator */
         $loader = new YamlFileLoader($locator);

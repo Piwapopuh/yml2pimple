@@ -23,7 +23,7 @@ class PimpleNormalizer
      * @throws \Exception
      */
     public function normalize($value, $container)
-    {	
+    {
 		if (!is_string($value)) {
 			return $value;
 		}

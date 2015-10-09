@@ -1,0 +1,6 @@
+suites:
+    main:
+        namespace: 'G\Yaml2Pimple'
+        psr4_prefix: 'G\Yaml2Pimple'
+        spec_path: 'tests'
+        src_path: 'src'

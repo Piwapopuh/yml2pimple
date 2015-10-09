@@ -19,7 +19,7 @@
 
     <testsuites>
         <testsuite name="tests">
-            <directory>tests/</directory>
+            <directory>tests/phpunit/</directory>
         </testsuite>
     </testsuites>
 

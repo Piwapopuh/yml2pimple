@@ -94,7 +94,6 @@ class ServiceFactory extends AbstractServiceFactory
             $instance = $this->createFromFactory($serviceConf->getFactory(), $params, $container);
         } else
         {
-            echo ">>".$serviceConf->getClass()."<<";
             $class = new \ReflectionClass($serviceConf->getClass());
             // create the instance
             $instance = $class->newInstanceArgs($params);
