@@ -22,6 +22,8 @@ parameters:
    fragments defined later, its like a singleton (the paramater name starts with an $)
    and is frozen after its first accessed</strong>
   $combined2: '<p>Lazy Parameter example2: %fragment1% %fragment2%</p>'
+  
+  # used by ExpressionNormalizer to evaluate expression vars
   $_normalize:
     test: @service_container
 

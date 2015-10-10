@@ -8,6 +8,10 @@ Pimple/Container builder
 With this library we can create a pimple /silex container from this yaml file (mostly similar syntax than Symfony's Dependency Injection Container)
 
 ```
+# test import
+imports:
+  - { resource: test2.yml}
+
 parameters:
   app_class: App
   name: Gonzalo
@@ -29,6 +33,10 @@ parameters:
    and is frozen after its first accessed</strong>
   $combined2: '<p>Lazy Parameter example2: %fragment1% %fragment2%</p>'
   
+  # used by ExpressionNormalizer to evaluate expression vars
+  $_normalize:
+    test: @service_container
+
 services:
   App:
     # class names can reference parameters
@@ -44,6 +52,9 @@ services:
         - [setDummy, ['@?Dummy']]
     # a configurator can modify the instance
     configurator: ['@Configurator', configure]
+	# add a aspect to method hello()
+    aspects:
+      - {pointcut: 'hello', advice:'Configurator:beforeHello'}
 
     
   Proxy:
@@ -61,10 +72,11 @@ services:
   Configurator:
     class:     Test
     # we can access elements of arrays with the symfony property access style (via normalizer)
-    arguments: ['%[deep][first]%']
+    arguments: ['%deep..first%', '?"hallo"~" Welt "~test["name"]']
 
   Factory:
     class: Factory
+
 
 ```
 
@@ -72,29 +84,60 @@ services:
 
 ```php
 use G\Yaml2Pimple\ContainerBuilder;
-use G\Yaml2Pimple\YamlFileLoader;
+
+use G\Yaml2Pimple\Loader\YamlFileLoader;
+use G\Yaml2Pimple\Loader\CacheLoader;
+
+use G\Yaml2Pimple\Normalizer\ChainNormalizer;
+use G\Yaml2Pimple\Normalizer\PimpleNormalizer;
+use G\Yaml2Pimple\Normalizer\ExpressionNormalizer;
+
 use Symfony\Component\Config\FileLocator;
-use ProxyManager\Factory\LazyLoadingValueHolderFactory;
 
-$container = new \Pimple();
+use G\Yaml2Pimple\Proxy\ServiceProxyAdapter;
+use G\Yaml2Pimple\Proxy\AspectProxyAdapter;
 
-$normalizer = new ChainNormalizer( array(
-	new PimpleNormalizer($container), 
-	new PropertyAccessPimpleNormalizer($container)
-));
+use G\Yaml2Pimple\Factory\ServiceFactory;
+use G\Yaml2Pimple\Factory\ParameterFactory;
+use G\Yaml2Pimple\Factory\ProxyParameterFactory;
 
-$builder = new ContainerBuilder($container);
-// load parameters lazy (try setting to false)
-$builder->setParametersLazy(true);
+$container      = new \Pimple();
+$builder        = new ContainerBuilder($container);
+
+$ymlLoader      = new YamlFileLoader(
+    new FileLocator(__DIR__)
+);
+$cacheLoader    = new CacheLoader($ymlLoader, __DIR__ . '/cache/');
+
 // set the normalizers 
-$builder->setNormalizer($normalizer);
-// lazy loading proxy manager factory
-$builder->setFactory(new LazyLoadingValueHolderFactory());
+$builder->setNormalizer(
+    new ChainNormalizer(
+        array(
+            new PimpleNormalizer(),
+            new ExpressionNormalizer()
+        )
+    )
+);
 
-$loader = new YamlFileLoader($builder, new FileLocator(__DIR__));
+$parameterFactory   = new ProxyParameterFactory();
 
-$loader->load('services.yml');
-$loader->load('services2.yml');
+$serviceFactory     = new ServiceFactory(
+    new ServiceProxyAdapter(__DIR__ . '/cache/')
+);
+
+$serviceFactory->setAspectFactory(
+    new AspectProxyAdapter( __DIR__ . '/cache/')
+);
+
+// set our loader helper
+$builder->setLoader($cacheLoader);
+
+// lazy service proxy factory
+$builder->setServiceFactory($serviceFactory);
+
+// lazy parameter proxy factory
+$builder->setParameterFactory($parameterFactory);
+
 
 $app = $container['App'];
 echo $app->hello();
