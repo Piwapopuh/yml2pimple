@@ -13,7 +13,6 @@ class YamlFileLoader
     private $locator;
     private $yamlParser;
     private $container;
-    private $currentDir;
     private $currentFile;
 
     public function __construct(FileLocatorInterface $fileLocator = null)
@@ -99,8 +98,6 @@ class YamlFileLoader
             return;
         }
 
-        $this->setCurrentDir(dirname($file));
-
         foreach ($content['imports'] as $import)
         {
             $resource = $import['resource'];
@@ -111,11 +108,6 @@ class YamlFileLoader
 
             $this->load($resource, true);
         }
-    }
-
-    public function setCurrentDir($dir)
-    {
-        $this->currentDir = $dir;
     }
 
     private function parseParameters($content)

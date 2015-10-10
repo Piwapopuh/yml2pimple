@@ -1,5 +1,7 @@
 <?php
 
+use G\Yaml2Pimple\Proxy\MethodInvocation;
+
 class Test
 {
 	protected $name;
@@ -16,7 +18,7 @@ class Test
         $class->setName($this->name . ' ' . $this->else);
     }
 
-	public function beforeHello($methodInvocation) {
+	public function beforeHello(MethodInvocation $methodInvocation) {
 		echo "captured method " . $methodInvocation->reflection->getName();
 		return $methodInvocation->proceed();
 	}

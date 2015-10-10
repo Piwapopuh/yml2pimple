@@ -90,7 +90,7 @@ class Parameter
         return $this->mergeExisting;
     }
 
-    public function _set($array)
+    public function initialize($array)
     {
         foreach($array as $key => $value) {
             $this->$key = $value;
@@ -100,7 +100,7 @@ class Parameter
     public static function __set_state($array)
     {
         $obj = new Parameter;
-        $obj->_set($array);
+        $obj->initialize($array);
         return $obj;
     }
 }

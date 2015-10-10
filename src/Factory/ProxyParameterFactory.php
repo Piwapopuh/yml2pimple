@@ -46,7 +46,7 @@ class ProxyParameterFactory extends AbstractParameterFactory
         // the value is evaluated on every access
         $that = $this;
         $value = $this->proxyFactory->createProxy(
-            function($c) use ($that, $parameterName, $parameterValue) {
+            function($c) use ($that, $parameterValue) {
                 $parameterValue = $that->normalize($parameterValue, $c);
                 return $parameterValue;
             }
@@ -59,7 +59,7 @@ class ProxyParameterFactory extends AbstractParameterFactory
             // avoid too deep nested level closures
             $this->setNestedLevel($parameterName, $nestedLevel + 1);
             // create a wrapper function for lazy calling
-            $value = $container->extend($parameterName, function($old, $c) use ($parameterName, $value) {
+            $value = $container->extend($parameterName, function($old, $c) use ($value) {
                 // extract the value from our LazyParameterFactory
                 if (is_object($value) && method_exists($value, '__invoke')) {
                     $value = $value($c);

@@ -10,7 +10,7 @@ namespace G\Yaml2Pimple\Proxy;
 
 use ProxyManager\Configuration;
 use ProxyManager\Factory\AccessInterceptorValueHolderFactory ;
-use CG\Proxy\MethodInvocation;
+use G\Yaml2Pimple\Proxy\MethodInvocation;
 
 class AspectProxyAdapter implements AspectProxyInterface
 {
@@ -69,7 +69,7 @@ class AspectProxyAdapter implements AspectProxyInterface
         foreach ($methods as $reflectionMethod) {
             if (preg_match('/' . $methodPattern . '/', $reflectionMethod->getName())) {
                 $proxy->setMethodPrefixInterceptor($reflectionMethod->getName(), function ($proxy, $object, $method, $params, &$returnEarly) use ($interceptor, $reflectionMethod) {
-                    $methodInvocation = new MethodInvocation($reflectionMethod, $object, $params, array());
+                    $methodInvocation = new MethodInvocation($reflectionMethod, $object, $params);
                     $returnEarly = true;
                     return call_user_func($interceptor, $methodInvocation);
                 });

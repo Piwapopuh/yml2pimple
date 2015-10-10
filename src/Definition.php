@@ -219,7 +219,7 @@ class Definition
         return is_array($this->factory) && count($this->factory) > 0;
     }	
     
-    public function _set($array) 
+    public function initialize($array) 
     {
         foreach($array as $key => $value) {
             $this->$key = $value;
@@ -229,7 +229,7 @@ class Definition
     public static function __set_state($array)
     {
         $obj = new Definition($array['name']);
-        $obj->_set($array);
+        $obj->initialize($array);
         return $obj;
     }
 }
