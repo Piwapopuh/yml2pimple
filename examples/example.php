@@ -57,6 +57,7 @@ $builder->setServiceFactory($serviceFactory);
 // lazy parameter proxy factory
 $builder->setParameterFactory($parameterFactory);
 
+$builder->load('test.yml');
 
 $app = $container['App'];
 echo $app->hello();
