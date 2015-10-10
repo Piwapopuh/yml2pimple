@@ -9,13 +9,8 @@ class YamlFileLoaderTest extends \PHPUnit_Framework_TestCase
 {
     public function testLoader()
     {
-        $prophecy = $this->prophesize('Symfony\Component\Config\FileLocatorInterface');
-        $prophecy->locate(Argument::type('string'))->willReturn(__DIR__ . '/fixtures/services.yml');
-        $locator = $prophecy->reveal();
-
-        /** @var \Symfony\Component\Config\FileLocatorInterface $locator */
-        $loader = new YamlFileLoader($locator);
-        $conf = $loader->load('services.yml');
+        $loader = new YamlFileLoader();
+        $conf = $loader->load(__DIR__ . '/fixtures/services.yml');
 
         static::assertInternalType('array', $conf);
 

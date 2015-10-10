@@ -144,23 +144,34 @@ class ServiceFactory extends AbstractServiceFactory
 	public function addConfigurators(array $configs = array(), $instance, $container)
 	{
 		// let another object modify this instance
-		foreach ($configs as $config) {
+		foreach ($configs as $config) 
+        {
 			$configurator 	= array_shift($config);
 			$method 		= array_shift($config);
 			$params 		= $this->normalize($config, $container);
-			array_merge($params, $instance);
-			call_user_func_array(array($this->normalize($configurator, $container), $method), $params);
+			
+            array_unshift($params, $instance);
+            
+            if (!isset($params[0])) {
+                throw new \InvalidArgumentException(sprintf('Argument expected'));
+            }
+			
+            call_user_func_array(array($this->normalize($configurator, $container), $method), $params);
 		}
 	}
 
     public function addAspects(array $aspects = array(), $instance, $container)
     {
         $instance = $this->aspectFactory->createProxy($instance);
+        
         foreach ($aspects as $aspect) {
-            $instance = $this->aspectFactory->addAspect($instance, $aspect['pointcut'], function($methodInvocation) use ($container, $aspect) {
+            
+            $func = function($methodInvocation) use ($container, $aspect) {
                 list($service, $method) = explode(':', $aspect['advice']);
                 return call_user_func(array($container[$service], $method), $methodInvocation);
-            });
+            };
+            
+            $instance = $this->aspectFactory->addAspect($instance, $aspect['pointcut'], $func);
         }
     }
 }

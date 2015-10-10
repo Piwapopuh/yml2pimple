@@ -16,7 +16,7 @@ class YamlFileLoader
     private $currentDir;
     private $currentFile;
 
-    public function __construct(FileLocatorInterface $fileLocator)
+    public function __construct(FileLocatorInterface $fileLocator = null)
     {
         $this->locator = $fileLocator;
     }
@@ -35,11 +35,13 @@ class YamlFileLoader
             $this->currentFile = $file;
         }
 
-        $path = null;
+        $path = $file;
         $content = null;
 
         try {
-            $path = $this->locator->locate($file);
+            if ( null !== $this->locator ) {
+                $path = $this->locator->locate($file);
+            }
             $content = $this->loadFile($path);
         } catch (\InvalidArgumentException $e) {
             //

@@ -5,44 +5,68 @@ namespace G\Yaml2Pimple;
 use G\Yaml2Pimple\Factory\AbstractParameterFactory;
 use G\Yaml2Pimple\Factory\AbstractServiceFactory;
 use G\Yaml2Pimple\Normalizer\PimpleNormalizer;
+use G\Yaml2Pimple\Factory\ServiceFactory;
+use G\Yaml2Pimple\Factory\ProxyParameterFactory;
+use G\Yaml2Pimple\Loader\YamlFileLoader;
 
 class ContainerBuilder
 {
     private $container;
-	private $normalizer;
-
+    
+	private $normalizer = null;
+    
     /**
      * @var AbstractServiceFactory $factory
      */
-    private $serviceFactory;
+    private $serviceFactory = null;
 
     /**
      * @var AbstractParameterFactory $parameterFactory
      */
-    private $parameterFactory;
+    private $parameterFactory = null;
+    
     private $serializer;
-    private $loader;
-
+    
+    private $loader = null;
+    
     public function __construct(\Pimple $container)
     {
         $this->container = $container;
     }
 
+    public function addDefaultParameterFactory()
+    {
+        $this->parameterFactory = $this->getDefaultParameterFactory();
+    }
+    
+    public function getDefaultParameterFactory()
+    {
+        return new ProxyParameterFactory(); 
+    }
+    
     /**
      * @param AbstractParameterFactory $parameterFactory
      */
     public function setParameterFactory(AbstractParameterFactory $parameterFactory)
     {
         $this->parameterFactory = $parameterFactory;
-        $this->parameterFactory->setNormalizer($this->normalizer);
         
         return $this;
     }
 
+    public function addDefaultServiceFactory()
+    {
+        $this->serviceFactory = $this->getDefaultServiceFactory();
+    }
+    
+    public function getDefaultServiceFactory()
+    {
+        return new ServiceFactory();
+    }
+    
 	public function setServiceFactory(AbstractServiceFactory $serviceFactory)
 	{
 		$this->serviceFactory = $serviceFactory;	
-		$this->serviceFactory->setNormalizer($this->normalizer);
         
 		return $this;
 	}    
@@ -54,21 +78,28 @@ class ContainerBuilder
 		return $this;
 	}
 	
+    public function getDefaultNormalizer()
+    {
+        return new PimpleNormalizer($this->container);
+    }
+    
 	protected function addDefaultNormalizer()
 	{
-		$this->setNormalizer(new PimpleNormalizer($this->container));
+		$this->normalizer = $this->getDefaultNormalizer();
         
         return $this;
 	}
 
-    /**
-     * @param $serializer
-     */
-    public function setSerializer($serializer)
+    public function addDefaultLoader()
     {
-        $this->serializer = $serializer;
+        $this->loader = $this->getDefaultLoader();
     }
-
+    
+    public function getDefaultLoader()
+    {
+        return new YamlFileLoader();
+    }
+    
     /**
      * @param mixed $loader
      */
@@ -90,7 +121,12 @@ class ContainerBuilder
 
     public function load($file)
     {
+        if ( null === $this->loader ) {
+            $this->addDefaultLoader();
+        }
+        
         $conf = $this->loader->load($file);
+        
         $this->buildFromArray($conf);
     }
 
@@ -100,6 +136,12 @@ class ContainerBuilder
 			$this->addDefaultNormalizer();
 		}
 
+        if ( null === $this->parameterFactory ) {
+            $this->addDefaultParameterFactory();
+        }
+        
+        $this->parameterFactory->setNormalizer($this->normalizer);
+        
         foreach ($conf['parameters'] as $parameterConf)
         {
             if ($parameterConf instanceof Parameter) {
@@ -107,6 +149,12 @@ class ContainerBuilder
             }
         }	
 		
+        if ( null === $this->serviceFactory ) {
+            $this->addDefaultServiceFactory();
+        }
+        
+        $this->serviceFactory->setNormalizer($this->normalizer);
+        
         foreach ($conf['services'] as $serviceName => $serviceConf)
 		{
             if ($serviceConf instanceof Definition) {
@@ -114,7 +162,15 @@ class ContainerBuilder
             }
         }
     }
-
+    
+    /**
+     * @param $serializer
+     */
+    public function setSerializer($serializer)
+    {
+        $this->serializer = $serializer;
+    }
+    
     public function serialize($data)
     {
         if (is_null($this->serializer)) {

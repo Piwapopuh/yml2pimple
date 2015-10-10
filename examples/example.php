@@ -76,6 +76,7 @@ echo  sprintf("Elapsed:  %f", ($now-$then));
 var_dump($container);
 
 $app = $container['App'];
+var_dump($app);
 echo $app->hello();
 //var_dump($app);
 

@@ -5,11 +5,6 @@ namespace test;
 use Prophecy\Argument;
 
 use G\Yaml2Pimple\ContainerBuilder;
-use G\Yaml2Pimple\Loader\YamlFileLoader;
-use G\Yaml2Pimple\Normalizer\PimpleNormalizer;
-use Symfony\Component\Config\FileLocator;
-use G\Yaml2Pimple\Factory\ServiceFactory;
-use G\Yaml2Pimple\Factory\ProxyParameterFactory;
 
 class ContainerBuilderTest extends \PHPUnit_Framework_TestCase
 {
@@ -29,19 +24,7 @@ class ContainerBuilderTest extends \PHPUnit_Framework_TestCase
         $container      = new \Pimple();
         $builder        = new ContainerBuilder($container);
 
-        $ymlLoader      = new YamlFileLoader(
-            new FileLocator(__DIR__ . '/fixtures')
-        );
-
-        // set the normalizers
-        $builder->setNormalizer(new PimpleNormalizer());
-        $parameterFactory   = new ProxyParameterFactory();
-        $serviceFactory     = new ServiceFactory();
-
-        $builder->setLoader($ymlLoader);
-        $builder->setServiceFactory($serviceFactory);
-        $builder->setParameterFactory($parameterFactory);
-        $builder->load('services.yml');
+        $builder->load(__DIR__ . '/fixtures/services.yml');
 
         $app = $container['App'];
         echo $app->hello();
