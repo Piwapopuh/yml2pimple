@@ -13,6 +13,7 @@ class ExpressionNormalizer
     {
         $this->key = $key;
 
+        $this->parser = $parser;
         if (null === $parser) {
             $this->parser = new ExpressionLanguage();
         }
