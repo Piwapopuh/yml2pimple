@@ -17,10 +17,33 @@ class CacheLoaderSpec extends ObjectBehavior
         $this->shouldHaveType('G\Yaml2Pimple\Loader\CacheLoader');
     }
     
-    public function it_returns_data_from_loader($loader)
+    public function it_returns_data_from_loader($loader, \G\Yaml2Pimple\FileCache $cache)
     {
-        $data = array(1,2,3);       
-        $loader->load('test.yml')->willReturn($data);       
+        $this->setCache($cache);
+        
+        $cache->setResources(Argument::any())->shouldBeCalled();
+        $cache->save(Argument::type('string'), Argument::type('array'))->shouldBeCalled();
+        $cache->contains(Argument::any())->shouldBeCalled()->willReturn(false);
+        $cache->fetch(Argument::any())->shouldNotBeCalled();
+        
+        $data = array(1,2,3);
+        $loader->load('test.yml')->willReturn($data);
+        $loader->getResources()->willReturn(array('test.yml'));
         $this->load('test.yml')->shouldReturn($data);
     }
+    
+    public function it_returns_data_from_cache($loader, \G\Yaml2Pimple\FileCache $cache)
+    {
+        $this->setCache($cache);
+        $cache->contains(Argument::any())->shouldBeCalled()->willReturn(true);
+        $cache->fetch(Argument::any())->shouldBeCalled();
+        
+        $data = array(1,2,3);
+        
+        $loader->load('test.yml')->willReturn($data);
+        $loader->getResources()->willReturn(array('test.yml'));
+               
+        $this->load('test.yml');
+        $this->load('test.yml');
+    }    
 }

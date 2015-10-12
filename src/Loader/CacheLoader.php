@@ -8,11 +8,13 @@
 
 namespace G\Yaml2Pimple\Loader;
 
+use G\Yaml2Pimple\FileCache;
 
 class CacheLoader
 {
-    private $loader;
+    private $loader = null;
     private $cacheDir;
+    private $cache = null;
 
     public function __construct($loader, $cacheDir = null)
     {
@@ -21,6 +23,11 @@ class CacheLoader
             $cacheDir = sys_get_temp_dir();
         }
         $this->cacheDir = $cacheDir;
+    }
+    
+    public function setCache($cache)
+    {
+        $this->cache = $cache;
     }
 
     /**
@@ -31,43 +38,28 @@ class CacheLoader
         $this->cacheDir = $cacheDir;
     }
 
-    public function getCacheFileName($file)
+    public function load($resource)
     {
-        return $this->cacheDir . '/___SC___' . crc32($file) . '.php';        
-    }
-    
-    /**
-     * @param $file
-     * @return mixed
-     */
-    public function load($file)
-    {
-        $cacheFile = $this->getCacheFileName($file);
+        $id = sprintf('%s/%s.php', $this->cacheDir, crc32($resource));
         
-        if (file_exists($cacheFile)) 
-        {
-            $conf = include $cacheFile;
-            if (isset($conf['resources']) && $this->isFresh($cacheFile, $conf['resources'])) {
-                return $conf;
-            }
+        if (null === $this->cache) {
+            $this->cache = new FileCache();
         }
-        
-        $conf = $this->loader->load($file);
+                
+        if (!$this->cache->contains($id)) {
+            $conf = $this->loader->load($resource);
+            $this->cache->setResources($this->loader->getResources());
+        }
 
-        $data = '<?php return ' . var_export($conf, true) . ';';
-        file_put_contents($cacheFile, $data);
-        
+        if (isset($conf)) {
+            $this->cache->save($id, $conf);
+        }
+
+        if (!isset($conf)) {
+            $conf = $this->cache->fetch($id);
+        }
+
         return $conf;
-    }
-
-    protected function isFresh($cacheFile, array $resources = array())
-    {
-        foreach($resources as $resource) {
-            if (filemtime($resource) > filemtime($cacheFile)) {
-                return false;
-            }
-        }
-        return true;
-    }
+    }    
 
 }

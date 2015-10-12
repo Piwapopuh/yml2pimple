@@ -3,6 +3,7 @@
 namespace G\Yaml2Pimple\Loader;
 
 use Symfony\Component\Config\FileLocatorInterface;
+use Symfony\Component\Config\Resource\FileResource;
 use Symfony\Component\Yaml\Parser as YamlParser;
 
 use G\Yaml2Pimple\Definition;
@@ -14,12 +15,18 @@ class YamlFileLoader
     private $yamlParser;
     private $container;
     private $currentFile;
+    private $resources = array();
 
     public function __construct(FileLocatorInterface $fileLocator = null)
     {
         $this->locator = $fileLocator;
     }
 
+    public function getResources()
+    {
+        return $this->resources;
+    }
+        
     /**
      * @param $file
      * @param bool|false $isImport
@@ -31,6 +38,7 @@ class YamlFileLoader
     {
         if (!$isImport) {
             $this->container = array();
+            $this->resources = array();
             $this->currentFile = $file;
         }
 
@@ -41,6 +49,7 @@ class YamlFileLoader
             if ( null !== $this->locator ) {
                 $path = $this->locator->locate($file);
             }
+            $this->resources[] = new FileResource($path);
             $content = $this->loadFile($path);
         } catch (\InvalidArgumentException $e) {
             //
