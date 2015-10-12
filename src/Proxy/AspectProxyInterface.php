@@ -11,5 +11,6 @@ namespace G\Yaml2Pimple\Proxy;
 interface AspectProxyInterface
 {
     public function createProxy($instance);
+
     public function addAspect($proxy, $methodPattern, \Closure $interceptor);
 }

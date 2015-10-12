@@ -18,9 +18,9 @@ class LazyParameterProxy
 
     public function __construct($callback, SerializerInterface $serializer = null)
     {
-        $this->callback     = $callback;
-        $this->frozen       = false;
-        $this->serializer   = $serializer;
+        $this->callback   = $callback;
+        $this->frozen     = false;
+        $this->serializer = $serializer;
     }
 
     public function __invoke($c)
@@ -55,6 +55,7 @@ class LazyParameterProxy
     public function __sleep()
     {
         $this->frozen = $this->serializer->wrapData($this->callback);
+
         return array('frozen', 'serializer');
     }
 

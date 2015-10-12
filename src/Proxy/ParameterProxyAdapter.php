@@ -8,10 +8,10 @@ class ParameterProxyAdapter implements ParameterProxyInterface
 {
     protected $serializer;
 
-	public function __construct(SerializerInterface $serializer = null)
-	{
+    public function __construct(SerializerInterface $serializer = null)
+    {
         $this->serializer = $serializer;
-	}
+    }
 
     public function createProxy(\Closure $func)
     {

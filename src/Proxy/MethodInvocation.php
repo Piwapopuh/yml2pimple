@@ -5,25 +5,25 @@ namespace G\Yaml2Pimple\Proxy;
 
 class MethodInvocation
 {
-    
+
     public $reflection;
-    
+
     public $object;
-    
+
     public $arguments;
 
     public function __construct(\ReflectionMethod $reflection, $object, array $arguments)
     {
         $this->reflection = $reflection;
-        $this->object = $object;
-        $this->arguments = $arguments;
+        $this->object     = $object;
+        $this->arguments  = $arguments;
     }
-    
+
     public function getThis()
     {
         return $this->object;
     }
-    
+
     public function getNamedArgument($name)
     {
         foreach ($this->reflection->getParameters() as $i => $param) {
@@ -31,7 +31,7 @@ class MethodInvocation
                 continue;
             }
 
-            if ( ! array_key_exists($i, $this->arguments)) {
+            if (!array_key_exists($i, $this->arguments)) {
                 if ($param->isDefaultValueAvailable()) {
                     return $param->getDefaultValue();
                 }
@@ -39,7 +39,7 @@ class MethodInvocation
                 throw new \RuntimeException(sprintf('There was no value given for parameter "%s".', $param->name));
             }
 
-            return $this->arguments[$i];
+            return $this->arguments[ $i ];
         }
 
         throw new \InvalidArgumentException(sprintf('The parameter "%s" does not exist.', $name));

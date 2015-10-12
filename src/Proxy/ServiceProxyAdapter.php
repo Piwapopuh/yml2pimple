@@ -40,11 +40,14 @@ class ServiceProxyAdapter implements ServiceProxyInterface
         }
 
         $factory = $this->factory;
+
         return function ($container) use ($factory, $className, $func) {
-            return $factory->createProxy($className,
+            return $factory->createProxy(
+                $className,
                 function (&$wrappedInstance, LazyLoadingInterface $proxy) use ($container, $func) {
                     $wrappedInstance = call_user_func($func, $container);
                     $proxy->setProxyInitializer(null);
+
                     return true;
                 }
             );

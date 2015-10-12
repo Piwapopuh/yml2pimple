@@ -9,13 +9,14 @@
 namespace G\Yaml2Pimple\Proxy;
 
 use ProxyManager\Configuration;
-use ProxyManager\Factory\AccessInterceptorValueHolderFactory ;
+use ProxyManager\Factory\AccessInterceptorValueHolderFactory;
 use G\Yaml2Pimple\Proxy\MethodInvocation;
 
 class AspectProxyAdapter implements AspectProxyInterface
 {
     private $factory;
     private $cache;
+
     /**
      * ProxyManagerFactory constructor.
      */
@@ -35,19 +36,20 @@ class AspectProxyAdapter implements AspectProxyInterface
         $this->factory = new AccessInterceptorValueHolderFactory ($config);
     }
 
-    public function createProxy($instance) {
+    public function createProxy($instance)
+    {
         if (is_null($this->factory)) {
             return $instance;
         }
 
         $factory = $this->factory;
-        $proxy = $factory->createProxy($instance);
-        $oid = spl_object_hash($proxy);
+        $proxy   = $factory->createProxy($instance);
+        $oid     = spl_object_hash($proxy);
 
         $reflection = new \ReflectionClass($instance);
-        $methods = $reflection->getMethods();
+        $methods    = $reflection->getMethods();
 
-        $this->cache[$oid] = $methods;
+        $this->cache[ $oid ] = $methods;
 
         return $proxy;
     }
@@ -60,19 +62,23 @@ class AspectProxyAdapter implements AspectProxyInterface
 
         $oid = spl_object_hash($proxy);
 
-        if (!isset($this->cache[$oid])) {
+        if (!isset($this->cache[ $oid ])) {
             return $proxy;
         }
 
-        $methods = (array)$this->cache[$oid];
+        $methods = (array)$this->cache[ $oid ];
 
         foreach ($methods as $reflectionMethod) {
             if (preg_match('/' . $methodPattern . '/', $reflectionMethod->getName())) {
-                $proxy->setMethodPrefixInterceptor($reflectionMethod->getName(), function ($proxy, $object, $method, $params, &$returnEarly) use ($interceptor, $reflectionMethod) {
-                    $methodInvocation = new MethodInvocation($reflectionMethod, $object, $params);
-                    $returnEarly = true;
-                    return call_user_func($interceptor, $methodInvocation);
-                });
+                $proxy->setMethodPrefixInterceptor(
+                    $reflectionMethod->getName(),
+                    function ($proxy, $object, $method, $params, &$returnEarly) use ($interceptor, $reflectionMethod) {
+                        $methodInvocation = new MethodInvocation($reflectionMethod, $object, $params);
+                        $returnEarly      = true;
+
+                        return call_user_func($interceptor, $methodInvocation);
+                    }
+                );
             }
         }
 

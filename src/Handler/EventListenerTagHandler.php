@@ -13,30 +13,36 @@ use G\Yaml2Pimple\Definition;
 class EventListenerTagHandler implements TagHandlerInterface
 {
     protected $dispatcher;
-    public function __construct($dispatcher) {
+
+    public function __construct($dispatcher)
+    {
         $this->dispatcher = $dispatcher;
     }
 
-    public function process(Definition $serviceConf, array $tags, \Pimple $container) {
-        foreach ($tags as $tag)
-        {
-            if (strtolower($tag['name']) === 'konfigurator.event_listener')
-            {
-                $container[$this->dispatcher] = $container->extend($this->dispatcher, function ($dispatcher, $c) use ($serviceConf, $tag)
-                {
-                    $dispatcher->addListener($tag['event'], function() use ($serviceConf, $tag, $c)
-                    {
-                        $service    = $serviceConf->getName();
-                        $method     = $tag['method'];
-                        if (isset($c[$service])) {
-                            return call_user_func_array(array($c[$service], $method), func_get_args());
-                        }
-                        return false;
-                    });
+    public function process(Definition $serviceConf, array $tags, \Pimple $container)
+    {
+        foreach ($tags as $tag) {
+            if (strtolower($tag['name']) === 'konfigurator.event_listener') {
+                $container[ $this->dispatcher ] = $container->extend(
+                    $this->dispatcher,
+                    function ($dispatcher, $c) use ($serviceConf, $tag) {
+                        $dispatcher->addListener(
+                            $tag['event'],
+                            function () use ($serviceConf, $tag, $c) {
+                                $service = $serviceConf->getName();
+                                $method  = $tag['method'];
+                                if (isset($c[ $service ])) {
+                                    return call_user_func_array(array($c[ $service ], $method), func_get_args());
+                                }
 
-                    return $dispatcher;
+                                return false;
+                            }
+                        );
 
-                });
+                        return $dispatcher;
+
+                    }
+                );
             }
         }
     }

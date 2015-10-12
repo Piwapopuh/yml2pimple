@@ -5,5 +5,5 @@ use \G\Yaml2Pimple\Definition;
 
 abstract class AbstractServiceFactory extends AbstractFactory
 {
-	abstract public function create(Definition $serviceConf, \Pimple $container);
+    abstract public function create(Definition $serviceConf, \Pimple $container);
 }
