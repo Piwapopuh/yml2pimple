@@ -8,7 +8,6 @@
 
 namespace G\Yaml2Pimple;
 
-
 class Parameter
 {
     protected $parameterName;
@@ -19,6 +18,7 @@ class Parameter
 
     /**
      * Parameter constructor.
+     *
      * @param $parameterName
      * @param $parameterValue
      * @param $frozen
@@ -33,13 +33,13 @@ class Parameter
         // freeze our value on first access (as singleton)
         if (0 === strpos($parameterName, '$')) {
             $parameterName = substr($parameterName, 1);
-            $frozen = false;
+            $frozen        = false;
         }
 
-        $this->parameterName = $parameterName;
+        $this->parameterName  = $parameterName;
         $this->parameterValue = $parameterValue;
-        $this->frozen = $frozen;
-        $this->mergeExisting = $mergeExisting;
+        $this->frozen         = $frozen;
+        $this->mergeExisting  = $mergeExisting;
     }
 
     /**
@@ -92,7 +92,7 @@ class Parameter
 
     public function initialize($array)
     {
-        foreach($array as $key => $value) {
+        foreach ($array as $key => $value) {
             $this->$key = $value;
         }
     }
@@ -101,6 +101,7 @@ class Parameter
     {
         $obj = new Parameter;
         $obj->initialize($array);
+
         return $obj;
     }
 }

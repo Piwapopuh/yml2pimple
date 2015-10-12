@@ -12,23 +12,23 @@ use G\Yaml2Pimple\Loader\YamlFileLoader;
 class ContainerBuilder
 {
     private $container;
-    
-	private $normalizer = null;
-    
+
+    private $normalizer;
+
     /**
      * @var AbstractServiceFactory $factory
      */
-    private $serviceFactory = null;
+    private $serviceFactory;
 
     /**
      * @var AbstractParameterFactory $parameterFactory
      */
-    private $parameterFactory = null;
-    
+    private $parameterFactory;
+
     private $serializer;
-    
-    private $loader = null;
-    
+
+    private $loader;
+
     public function __construct(\Pimple $container)
     {
         $this->container = $container;
@@ -38,19 +38,21 @@ class ContainerBuilder
     {
         $this->parameterFactory = $this->getDefaultParameterFactory();
     }
-    
+
     public function getDefaultParameterFactory()
     {
-        return new ProxyParameterFactory(); 
+        return new ProxyParameterFactory();
     }
-    
+
     /**
      * @param AbstractParameterFactory $parameterFactory
+     *
+     * @return $this
      */
     public function setParameterFactory(AbstractParameterFactory $parameterFactory)
     {
         $this->parameterFactory = $parameterFactory;
-        
+
         return $this;
     }
 
@@ -58,48 +60,48 @@ class ContainerBuilder
     {
         $this->serviceFactory = $this->getDefaultServiceFactory();
     }
-    
+
     public function getDefaultServiceFactory()
     {
         return new ServiceFactory();
     }
-    
-	public function setServiceFactory(AbstractServiceFactory $serviceFactory)
-	{
-		$this->serviceFactory = $serviceFactory;	
-        
-		return $this;
-	}    
-    
-	public function setNormalizer($normalizer)
-	{
-		$this->normalizer = $normalizer;
-		
-		return $this;
-	}
-	
+
+    public function setServiceFactory(AbstractServiceFactory $serviceFactory)
+    {
+        $this->serviceFactory = $serviceFactory;
+
+        return $this;
+    }
+
+    public function setNormalizer($normalizer)
+    {
+        $this->normalizer = $normalizer;
+
+        return $this;
+    }
+
     public function getDefaultNormalizer()
     {
         return new PimpleNormalizer($this->container);
     }
-    
-	protected function addDefaultNormalizer()
-	{
-		$this->normalizer = $this->getDefaultNormalizer();
-        
+
+    protected function addDefaultNormalizer()
+    {
+        $this->normalizer = $this->getDefaultNormalizer();
+
         return $this;
-	}
+    }
 
     public function addDefaultLoader()
     {
         $this->loader = $this->getDefaultLoader();
     }
-    
+
     public function getDefaultLoader()
     {
         return new YamlFileLoader();
     }
-    
+
     /**
      * @param mixed $loader
      */
@@ -107,62 +109,61 @@ class ContainerBuilder
     {
         $this->loader = $loader;
     }
-	
-	public function add($k, $v = null)
-	{
-		if (is_array($k)) {
-            foreach($k as $key => $value) {
+
+    public function add($k, $v = null)
+    {
+        if (is_array($k)) {
+            /** @var string $key */
+            foreach ($k as $key => $value) {
                 $this->container[ $key ] = $value;
             }
         } else {
             $this->container[ $k ] = $v;
         }
-	}
+    }
 
     public function load($file)
     {
-        if ( null === $this->loader ) {
+        if (null === $this->loader) {
             $this->addDefaultLoader();
         }
-        
+
         $conf = $this->loader->load($file);
-        
+
         $this->buildFromArray($conf);
     }
 
     public function buildFromArray($conf)
     {
-		if ( null === $this->normalizer ) {
-			$this->addDefaultNormalizer();
-		}
+        if (null === $this->normalizer) {
+            $this->addDefaultNormalizer();
+        }
 
-        if ( null === $this->parameterFactory ) {
+        if (null === $this->parameterFactory) {
             $this->addDefaultParameterFactory();
         }
-        
+
         $this->parameterFactory->setNormalizer($this->normalizer);
-        
-        foreach ($conf['parameters'] as $parameterConf)
-        {
+
+        foreach ($conf['parameters'] as $parameterConf) {
             if ($parameterConf instanceof Parameter) {
                 $this->container = $this->parameterFactory->create($parameterConf, $this->container);
             }
-        }	
-		
-        if ( null === $this->serviceFactory ) {
+        }
+
+        if (null === $this->serviceFactory) {
             $this->addDefaultServiceFactory();
         }
-        
+
         $this->serviceFactory->setNormalizer($this->normalizer);
-        
-        foreach ($conf['services'] as $serviceName => $serviceConf)
-		{
+
+        foreach ($conf['services'] as $serviceName => $serviceConf) {
             if ($serviceConf instanceof Definition) {
                 $this->container = $this->serviceFactory->create($serviceConf, $this->container);
             }
         }
     }
-    
+
     /**
      * @param $serializer
      */
@@ -170,18 +171,19 @@ class ContainerBuilder
     {
         $this->serializer = $serializer;
     }
-    
+
     public function serialize($data)
     {
-        if (is_null($this->serializer)) {
+        if (null === $this->serializer) {
             return $data;
         }
 
         $data = $this->serializer->wrapData($data);
+
         return serialize($data);
     }
 
-    public function unserialize($data)
+    public function unSerialize($data)
     {
         if (is_null($this->serializer)) {
             return $data;
@@ -189,6 +191,7 @@ class ContainerBuilder
 
         $data = unserialize($data);
         $data = $this->serializer->unwrapData($data);
+
         return $data;
     }
 }

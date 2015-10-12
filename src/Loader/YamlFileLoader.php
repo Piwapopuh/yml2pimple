@@ -26,9 +26,9 @@ class YamlFileLoader
     {
         return $this->resources;
     }
-        
+
     /**
-     * @param $file
+     * @param            $file
      * @param bool|false $isImport
      *
      * @return array
@@ -37,20 +37,20 @@ class YamlFileLoader
     public function load($file, $isImport = false)
     {
         if (!$isImport) {
-            $this->container = array();
-            $this->resources = array();
+            $this->container   = array();
+            $this->resources   = array();
             $this->currentFile = $file;
         }
 
-        $path = $file;
+        $path    = $file;
         $content = null;
 
         try {
-            if ( null !== $this->locator ) {
+            if (null !== $this->locator) {
                 $path = $this->locator->locate($file);
             }
             $this->resources[] = new FileResource($path);
-            $content = $this->loadFile($path);
+            $content           = $this->loadFile($path);
         } catch (\InvalidArgumentException $e) {
             //
         }
@@ -107,8 +107,7 @@ class YamlFileLoader
             return;
         }
 
-        foreach ($content['imports'] as $import)
-        {
+        foreach ($content['imports'] as $import) {
             $resource = $import['resource'];
 
             if (!$this->isAbsolutePath($resource)) {
@@ -122,8 +121,7 @@ class YamlFileLoader
     private function parseParameters($content)
     {
         if (isset($content['parameters'])) {
-            foreach ($content['parameters'] as $key => $value)
-            {
+            foreach ($content['parameters'] as $key => $value) {
                 $param = new Parameter($key, $value);
                 $param->setFile($this->currentFile);
 
@@ -150,32 +148,32 @@ class YamlFileLoader
 
         if (isset($service['synthetic'])) {
             $definition->setSynthetic($service['synthetic']);
-        }			
-		
+        }
+
         if (isset($service['class'])) {
             $definition->setClass($service['class']);
         }
-		
+
         if (isset($service['scope'])) {
             $definition->setScope($service['scope']);
         }
 
         if (isset($service['lazy'])) {
             $definition->setLazy($service['lazy']);
-        }		
-		
+        }
+
         if (isset($service['arguments'])) {
             $definition->setArguments($service['arguments']);
         }
 
         if (isset($service['calls'])) {
-    		$definition->addCalls($service['calls']);
-        }		
+            $definition->addCalls($service['calls']);
+        }
 
-		if (isset($service['configurator'])) {
-			$definition->addConfigurator($service['configurator']);
-        }	
-		
+        if (isset($service['configurator'])) {
+            $definition->addConfigurator($service['configurator']);
+        }
+
         if (isset($service['factory'])) {
             $definition->setFactory($service['factory']);
         }
@@ -188,7 +186,7 @@ class YamlFileLoader
             $definition->setAspects($service['aspects']);
         }
 
-        $this->container['services'][$id] = $definition;
+        $this->container['services'][ $id ] = $definition;
     }
 
     /**

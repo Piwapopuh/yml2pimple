@@ -5,33 +5,33 @@ namespace G\Yaml2Pimple;
 class Definition
 {
     protected $name;
-    
+
     protected $class;
 
     protected $arguments = array();
-	
-	protected $calls = array();
-	
-	protected $configurators = array();
 
-	protected $scope = 'container';
-	
-	protected $lazy = false;
-	
-	protected $synthetic = false;
-	
-	protected $factory = array();
+    protected $calls = array();
 
-	protected $file;
+    protected $configurators = array();
 
-	protected $tags = array();
+    protected $scope = 'container';
+
+    protected $lazy = false;
+
+    protected $synthetic = false;
+
+    protected $factory = array();
+
+    protected $file;
+
+    protected $tags = array();
 
     protected $aspects = array();
 
-	public function __construct($name)
-	{
-        $this->name          = $name;
-	}
+    public function __construct($name)
+    {
+        $this->name = $name;
+    }
 
     /**
      * @return mixed
@@ -79,23 +79,23 @@ class Definition
     {
         return $this->name;
     }
-    
-	/**
-	 * @return string $file
-	 */
-	public function getFile()
-	{
-		return $this->file;
-	}
 
-	/**
-	 * @param string $file
-	 */
-	public function setFile($file)
-	{
-		$this->file = $file;
-	}
-	
+    /**
+     * @return string $file
+     */
+    public function getFile()
+    {
+        return $this->file;
+    }
+
+    /**
+     * @param string $file
+     */
+    public function setFile($file)
+    {
+        $this->file = $file;
+    }
+
     public function setClass($class)
     {
         $this->class = $class;
@@ -130,78 +130,78 @@ class Definition
         $this->calls = $calls;
 
         return $this;
-	}
+    }
 
     public function addCall(array $call)
-	{
-		$this->calls[] = $call;
-		
-		return $this;
-	}
-	
-	public function getCalls()
-	{
-		return $this->calls;
-	}
+    {
+        $this->calls[] = $call;
+
+        return $this;
+    }
+
+    public function getCalls()
+    {
+        return $this->calls;
+    }
 
     public function hasCalls()
     {
         return is_array($this->calls) && count($this->calls) > 0;
     }
-	
-	public function addConfigurator($config)
-	{
-		$this->configurators[] = $config;
-		
-		return $this;		
-	}
-	
-	public function getConfigurators()
-	{
-		return $this->configurators;
-	}
+
+    public function addConfigurator($config)
+    {
+        $this->configurators[] = $config;
+
+        return $this;
+    }
+
+    public function getConfigurators()
+    {
+        return $this->configurators;
+    }
 
     public function hasConfigurators()
     {
         return is_array($this->configurators) && count($this->configurators) > 0;
     }
 
-	public function setScope($scope)
-	{
-		$this->scope = $scope;
-		
-		return $this;
-	}
-	
-	public function getScope()
-	{
-		return $this->scope;
-	}
-	
-	public function setLazy($lazy)
-	{
-		$this->lazy = $lazy;
-		
-		return $this;
-	}
-	
-	public function isLazy()
-	{
-		return $this->lazy;
-	}
-	
-	public function setSynthetic($synthetic)
-	{
-		$this->synthetic = $synthetic;
-		
-		return $this;
-	}
-	
-	public function isSynthetic()
-	{
-		return $this->synthetic;
-	}	
-	
+    public function setScope($scope)
+    {
+        $this->scope = $scope;
+
+        return $this;
+    }
+
+    public function getScope()
+    {
+        return $this->scope;
+    }
+
+    public function setLazy($lazy)
+    {
+        $this->lazy = $lazy;
+
+        return $this;
+    }
+
+    public function isLazy()
+    {
+        return $this->lazy;
+    }
+
+    public function setSynthetic($synthetic)
+    {
+        $this->synthetic = $synthetic;
+
+        return $this;
+    }
+
+    public function isSynthetic()
+    {
+        return $this->synthetic;
+    }
+
     public function setFactory($factory)
     {
         $this->factory = $factory;
@@ -212,24 +212,25 @@ class Definition
     public function getFactory()
     {
         return $this->factory;
-    }	
-	
+    }
+
     public function hasFactory()
     {
         return is_array($this->factory) && count($this->factory) > 0;
-    }	
-    
-    public function initialize($array) 
+    }
+
+    public function initialize($array)
     {
-        foreach($array as $key => $value) {
+        foreach ($array as $key => $value) {
             $this->$key = $value;
         }
     }
-    
+
     public static function __set_state($array)
     {
         $obj = new Definition($array['name']);
         $obj->initialize($array);
+
         return $obj;
     }
 }
