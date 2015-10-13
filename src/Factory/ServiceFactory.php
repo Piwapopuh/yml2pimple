@@ -43,15 +43,15 @@ class ServiceFactory extends AbstractServiceFactory
 	public function create(Definition $serviceConf, \Pimple $container)
 	{
         $serviceName = $serviceConf->getName();
-        
+
         $factoryFunction = null;
-        
+
         if (!$serviceConf->isSynthetic())
         {
             // we dont know how to create a synthetic service, its set later
             // the classname can be a parameter reference
             $serviceConf->setClass($this->normalize($serviceConf->getClass(), $container));
-            
+
             $that = $this;
             $aspectFactory = $this->aspectFactory;
 
@@ -148,7 +148,7 @@ class ServiceFactory extends AbstractServiceFactory
 			$configurator 	= array_shift($config);
 			$method 		= array_shift($config);
 			$params 		= $this->normalize($config, $container);
-			array_merge($params, $instance);
+			array_unshift($params, $instance);
 			call_user_func_array(array($this->normalize($configurator, $container), $method), $params);
 		}
 	}
