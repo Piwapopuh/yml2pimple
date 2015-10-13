@@ -1,0 +1,10 @@
+parameters:
+  test:
+    - 1
+    - 2
+    - 3
+
+  test2:
+    host: localhost
+    user: root
+    pass: test

@@ -1,18 +1,28 @@
 <?php
-
 namespace G\Yaml2Pimple;
 
 use G\Yaml2Pimple\Factory\AbstractParameterFactory;
 use G\Yaml2Pimple\Factory\AbstractServiceFactory;
+use G\Yaml2Pimple\Normalizer\ChainNormalizer;
 use G\Yaml2Pimple\Normalizer\PimpleNormalizer;
+use G\Yaml2Pimple\Normalizer\ExpressionNormalizer;
 use G\Yaml2Pimple\Factory\ServiceFactory;
 use G\Yaml2Pimple\Factory\ProxyParameterFactory;
 use G\Yaml2Pimple\Loader\YamlFileLoader;
+use G\Yaml2Pimple\Loader\PhpFileLoader;
+use G\Yaml2Pimple\Loader\AbstractLoader;
+use G\Yaml2Pimple\Loader\CacheLoader;
+use Symfony\Component\Config\FileLocator;
+use Symfony\Component\Config\FileLocatorInterface;
+use Symfony\Component\Config\Loader\DelegatingLoader;
+use Symfony\Component\Config\Loader\LoaderResolver;
 
 class ContainerBuilder
 {
+    /** @var  \Pimple $container */
     private $container;
 
+    /** @var  mixed $normalizer */
     private $normalizer;
 
     /**
@@ -27,21 +37,62 @@ class ContainerBuilder
 
     private $serializer;
 
+    /** @var  AbstractLoader $loader */
     private $loader;
 
-    public function __construct(\Pimple $container)
+    /** @var FileLocatorInterface $locator */
+    private $locator;
+
+    /** @var  ResourceCollection $resources */
+    private $resources;
+
+    /** @var CacheLoader $cacheLoader */
+    private $cacheLoader;
+
+    /** @var string $cacheDir */
+    private $cacheDir;
+
+    /** @var array[AbstractLoader] $additionalLoaders  */
+    private $additionalLoaders = array();
+
+    public function __construct(\Pimple $container, $paths = array())
     {
         $this->container = $container;
+        $this->locator   = new FileLocator($paths);
+        $this->resources = new ResourceCollection();
     }
 
-    public function addDefaultParameterFactory()
+    public function setLocator(FileLocatorInterface $locator)
     {
-        $this->parameterFactory = $this->getDefaultParameterFactory();
+        $this->locator = $locator;
+
+        return $this;
     }
 
-    public function getDefaultParameterFactory()
+    public function setResources(ResourceCollection $resources)
     {
-        return new ProxyParameterFactory();
+        $this->resources = $resources;
+
+        return $this;
+    }
+
+    public function getResources()
+    {
+        return $this->resources;
+    }
+
+    public function setCacheDir($cacheDir)
+    {
+        $this->cacheDir = $cacheDir;
+
+        return $this;
+    }
+
+    public function setCacheLoader($cacheLoader)
+    {
+        $this->cacheLoader = $cacheLoader;
+
+        return $this;
     }
 
     /**
@@ -54,16 +105,6 @@ class ContainerBuilder
         $this->parameterFactory = $parameterFactory;
 
         return $this;
-    }
-
-    public function addDefaultServiceFactory()
-    {
-        $this->serviceFactory = $this->getDefaultServiceFactory();
-    }
-
-    public function getDefaultServiceFactory()
-    {
-        return new ServiceFactory();
     }
 
     public function setServiceFactory(AbstractServiceFactory $serviceFactory)
@@ -80,52 +121,29 @@ class ContainerBuilder
         return $this;
     }
 
-    public function getDefaultNormalizer()
+    public function addLoader(AbstractLoader $loader)
     {
-        return new PimpleNormalizer($this->container);
-    }
-
-    protected function addDefaultNormalizer()
-    {
-        $this->normalizer = $this->getDefaultNormalizer();
+        $this->additionalLoaders[] = $loader;
 
         return $this;
     }
 
-    public function addDefaultLoader()
-    {
-        $this->loader = $this->getDefaultLoader();
-    }
-
-    public function getDefaultLoader()
-    {
-        return new YamlFileLoader();
-    }
-
     /**
      * @param mixed $loader
+     *
+     * @return $this
      */
     public function setLoader($loader)
     {
         $this->loader = $loader;
-    }
 
-    public function add($k, $v = null)
-    {
-        if (is_array($k)) {
-            /** @var string $key */
-            foreach ($k as $key => $value) {
-                $this->container[ $key ] = $value;
-            }
-        } else {
-            $this->container[ $k ] = $v;
-        }
+        return $this;
     }
 
     public function load($file)
     {
         if (null === $this->loader) {
-            $this->addDefaultLoader();
+            $this->loader = $this->getDefaultLoader();
         }
 
         $conf = $this->loader->load($file);
@@ -136,11 +154,11 @@ class ContainerBuilder
     public function buildFromArray($conf)
     {
         if (null === $this->normalizer) {
-            $this->addDefaultNormalizer();
+            $this->normalizer = $this->getDefaultNormalizer();
         }
 
         if (null === $this->parameterFactory) {
-            $this->addDefaultParameterFactory();
+            $this->parameterFactory = new ProxyParameterFactory();
         }
 
         $this->parameterFactory->setNormalizer($this->normalizer);
@@ -152,7 +170,7 @@ class ContainerBuilder
         }
 
         if (null === $this->serviceFactory) {
-            $this->addDefaultServiceFactory();
+            $this->serviceFactory = new ServiceFactory();
         }
 
         $this->serviceFactory->setNormalizer($this->normalizer);
@@ -170,6 +188,8 @@ class ContainerBuilder
     public function setSerializer($serializer)
     {
         $this->serializer = $serializer;
+
+        return $this;
     }
 
     public function serialize($data)
@@ -193,5 +213,36 @@ class ContainerBuilder
         $data = $this->serializer->unwrapData($data);
 
         return $data;
+    }
+
+    private function getDefaultLoader()
+    {
+        $loaderCollection = array(
+            new YamlFileLoader($this->locator, $this->resources),
+            new PhpFileLoader($this->locator, $this->resources)
+        );
+
+        $loaderCollection = array_merge($loaderCollection, $this->additionalLoaders);
+
+        $loader = new DelegatingLoader(
+            new LoaderResolver($loaderCollection)
+        );
+
+        if (null !== $this->cacheDir) {
+            $loader = new CacheLoader($loader, $this->resources);
+            $loader->setCacheDir($this->cacheDir);
+        }
+
+        return $loader;
+    }
+
+    private function getDefaultNormalizer()
+    {
+        return new ChainNormalizer(
+            array(
+                new PimpleNormalizer(),
+                new ExpressionNormalizer()
+            )
+        );
     }
 }

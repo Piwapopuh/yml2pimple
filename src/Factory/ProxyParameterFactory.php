@@ -59,16 +59,15 @@ class ProxyParameterFactory extends AbstractParameterFactory
             // avoid too deep nested level closures
             $this->setNestedLevel($parameterName, $nestedLevel + 1);
             // create a wrapper function for lazy calling
-            $value = $container->extend(
-                $parameterName,
-                function ($old, $c) use ($value) {
+            $value = $container->extend($parameterName,
+                function ($old, $c) use ($value, $parameterConf) {
                     // extract the value from our LazyParameterFactory
                     if (is_object($value) && method_exists($value, '__invoke')) {
                         $value = $value($c);
                     }
 
                     // merge existing data with new
-                    return array_replace_recursive($old, $value);
+                    return call_user_func($parameterConf->getMergeStrategy(), $old, $value);
                 }
             );
         }

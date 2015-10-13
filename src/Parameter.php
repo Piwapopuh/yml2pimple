@@ -14,6 +14,7 @@ class Parameter
     protected $parameterValue;
     protected $frozen;
     protected $mergeExisting;
+    protected $mergeStrategy;
     protected $file;
 
     /**
@@ -28,6 +29,11 @@ class Parameter
     {
         if (is_array($parameterValue)) {
             $mergeExisting = true;
+            $this->mergeStrategy = 'array_replace_recursive';
+            if (isset($parameterValue[0]) && '...' === $parameterValue[0]) {
+                array_shift($parameterValue);
+                $this->mergeStrategy = 'array_merge_recursive';
+            }
         }
 
         // freeze our value on first access (as singleton)
@@ -88,6 +94,11 @@ class Parameter
     public function mergeExisting()
     {
         return $this->mergeExisting;
+    }
+
+    public function getMergeStrategy()
+    {
+        return $this->mergeStrategy;
     }
 
     public function initialize($array)

@@ -13,21 +13,23 @@ use G\Yaml2Pimple\FileCache;
 class CacheLoader
 {
     private $loader;
+    private $resources;
     private $cacheDir;
     /** @var FileCache $cache */
     private $cache;
 
     /**
      * @param             $loader
-     *
+     * @param \G\Yaml2Pimple\ResourceCollection $resources
      * @param null|string $cacheDir
      */
-    public function __construct($loader, $cacheDir = null)
+    public function __construct($loader, $resources, $cacheDir = null)
     {
         $this->loader = $loader;
         if (null === $cacheDir) {
             $cacheDir = sys_get_temp_dir();
         }
+        $this->resources = $resources;
         $this->cacheDir = $cacheDir;
     }
 
@@ -70,7 +72,8 @@ class CacheLoader
 
         if (!$this->cache->contains($id)) {
             $conf = $this->loader->load($resource);
-            $this->cache->setResources($this->loader->getResources());
+            $this->cache->setResources($this->resources->all());
+            $this->resources->clear();
         }
 
         if (isset($conf)) {

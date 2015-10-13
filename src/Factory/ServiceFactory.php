@@ -60,17 +60,17 @@ class ServiceFactory extends AbstractServiceFactory
                 $instance = $that->createInstance($serviceConf, $c);
                 // add aspects
                 if (null !== $aspectFactory && $serviceConf->hasAspects()) {
-                    $that->addAspects($serviceConf->getAspects(), $instance, $c);
+                    $instance = $that->addAspects($serviceConf->getAspects(), $instance, $c);
                 }
 
                 // add some method calls
                 if ($serviceConf->hasCalls()) {
-                    $that->addMethodCalls($serviceConf->getCalls(), $instance, $c);
+                    $instance = $that->addMethodCalls($serviceConf->getCalls(), $instance, $c);
                 }
 
                 // let another object modify this instance
                 if ($serviceConf->hasConfigurators()) {
-                    $that->addConfigurators($serviceConf->getConfigurators(), $instance, $c);
+                    $instance = $that->addConfigurators($serviceConf->getConfigurators(), $instance, $c);
                 }
 
                 return $instance;
@@ -133,10 +133,13 @@ class ServiceFactory extends AbstractServiceFactory
     public function addMethodCalls(array $calls = array(), $instance, $container)
     {
         foreach ($calls as $call) {
-            list($method, $arguments) = $call;
-            $params = $this->normalize($arguments, $container);
+            $method    = array_shift($call);
+            $arguments = array_shift($call);
+            $params    = $this->normalize($arguments, $container);
             call_user_func_array(array($instance, $method), $params);
         }
+
+        return $instance;
     }
 
     public function addConfigurators(array $configs = array(), $instance, $container)
@@ -149,12 +152,14 @@ class ServiceFactory extends AbstractServiceFactory
 
             array_unshift($params, $instance);
 
-            if (!isset($params[0])) {
+            if ($instance !== $params[0]) {
                 throw new \InvalidArgumentException(sprintf('Argument expected'));
             }
 
             call_user_func_array(array($this->normalize($configurator, $container), $method), $params);
         }
+
+        return $instance;
     }
 
     public function addAspects(array $aspects = array(), $instance, $container)
@@ -162,7 +167,6 @@ class ServiceFactory extends AbstractServiceFactory
         $instance = $this->aspectFactory->createProxy($instance);
 
         foreach ($aspects as $aspect) {
-
             $func = function ($methodInvocation) use ($container, $aspect) {
                 list($service, $method) = explode(':', $aspect['advice']);
 
@@ -171,5 +175,7 @@ class ServiceFactory extends AbstractServiceFactory
 
             $instance = $this->aspectFactory->addAspect($instance, $aspect['pointcut'], $func);
         }
+
+        return $instance;
     }
 }

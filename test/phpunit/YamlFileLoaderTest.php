@@ -4,12 +4,14 @@ namespace test;
 
 use Prophecy\Argument;
 use G\Yaml2Pimple\Loader\YamlFileLoader;
+use Symfony\Component\Config\FileLocator;
 
 class YamlFileLoaderTest extends \PHPUnit_Framework_TestCase
 {
     public function testLoader()
     {
-        $loader = new YamlFileLoader();
+        $locator = new FileLocator(__DIR__);
+        $loader = new YamlFileLoader($locator);
         $conf = $loader->load(__DIR__ . '/fixtures/services.yml');
 
         static::assertInternalType('array', $conf);
@@ -49,6 +51,6 @@ class YamlFileLoaderTest extends \PHPUnit_Framework_TestCase
         static::assertEquals(array(), $curl->getArguments());
         static::assertEquals('\test\fixtures\Proxy', $proxy->getClass());
         static::assertEquals(array('@Curl'), $proxy->getArguments());
-        
+
     }
 }
