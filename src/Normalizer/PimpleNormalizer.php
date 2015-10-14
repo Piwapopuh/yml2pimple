@@ -4,7 +4,7 @@ namespace G\Yaml2Pimple\Normalizer;
 
 use \Symfony\Component\PropertyAccess\PropertyAccess;
 
-class PimpleNormalizer
+class PimpleNormalizer implements NormalizerInterface
 {
     /** @var \Symfony\Component\PropertyAccess\PropertyAccessor */
     private $accessor;

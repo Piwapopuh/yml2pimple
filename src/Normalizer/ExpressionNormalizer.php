@@ -4,7 +4,7 @@ namespace G\Yaml2Pimple\Normalizer;
 
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
-class ExpressionNormalizer
+class ExpressionNormalizer implements NormalizerInterface
 {
     private   $parser;
     protected $key;

@@ -2,7 +2,7 @@
 
 namespace G\Yaml2Pimple\Normalizer;
 
-class ChainNormalizer
+class ChainNormalizer implements NormalizerInterface
 {
     protected $normalizers = array();
 
