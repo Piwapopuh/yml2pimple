@@ -56,20 +56,24 @@ class ProxyParameterFactory extends AbstractParameterFactory
         $nestedLevel = $this->getNestedLevel($parameterName);
         // merge existing data per default
         if ($nestedLevel < $this->maxNestedLevel && isset($container[ $parameterName ]) && $parameterConf->mergeExisting()) {
-            // avoid too deep nested level closures
-            $this->setNestedLevel($parameterName, $nestedLevel + 1);
-            // create a wrapper function for lazy calling
-            $value = $container->extend($parameterName,
-                function ($old, $c) use ($value, $parameterConf) {
-                    // extract the value from our LazyParameterFactory
-                    if (is_object($value) && method_exists($value, '__invoke')) {
-                        $value = $value($c);
-                    }
+            try {
+                // avoid too deep nested level closures
+                $this->setNestedLevel($parameterName, $nestedLevel + 1);
+                // create a wrapper function for lazy calling
+                $value = $container->extend(
+                    $parameterName,
+                    function ($old, $c) use ($value, $parameterConf) {
+                        // extract the value from our LazyParameterFactory
+                        if (is_object($value) && method_exists($value, '__invoke')) {
+                            $value = $value($c);
+                        }
 
-                    // merge existing data with new
-                    return call_user_func($parameterConf->getMergeStrategy(), $old, $value);
-                }
-            );
+                        // merge existing data with new
+                        return call_user_func($parameterConf->getMergeStrategy(), $old, $value);
+                    }
+                );
+            } catch(\InvalidArgumentException $e) {
+            }
         }
 
         // freeze our value on first access (as singleton) this is default

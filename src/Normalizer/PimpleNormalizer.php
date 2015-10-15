@@ -60,40 +60,56 @@ class PimpleNormalizer implements NormalizerInterface
             }
         }
 
-        if (preg_match('{^%\[?([a-zA-Z0-9_.]+)\]?%$}', $value, $match)) {
-            $key = strtolower($match[1]);
-            if (false !== strpos($key, '..')) {
-                $key = '[' . str_replace('..', '][', $key) . ']';
-                if ($this->accessor->isReadable($container, $key)) {
-                    return $this->accessor->getValue($container, $key);
-                }
+        $accessor = $this->accessor;
 
-                return $match[0];
+        if (preg_match('{^%([a-zA-Z0-9_.\[\]]+)%$}', $value, $match)) {
+            $key = strtolower($match[1]);
+
+            if (false !== strpos($key, '..')) {
+                $key = str_replace('..', '][', $key);
+            }
+
+            if(substr($key,0,1) !== '[') {
+                $key = '[' . $key;
+            }
+
+            if(substr($key,-1,1) !== ']') {
+                $key .= ']';
+            }
+
+            if ($accessor->isReadable($container, $key)) {
+                return $accessor->getValue($container, $key);
             }
 
             return isset($container[ $key ]) ? $container[ $key ] : $match[0];
         }
 
-        $accessor = $this->accessor;
+
         $callback = function ($matches) use ($container, $accessor) {
             if (!isset($matches[1])) {
                 return '%%';
             }
+
             $key = strtolower($matches[1]);
 
             if (false !== strpos($key, '..')) {
-                $key = '[' . str_replace('..', '][', $key) . ']';
-                if ($accessor->isReadable($container, $key)) {
-                    return $accessor->getValue($container, $key);
-                }
-
-                return $matches[0];
+                $key = str_replace('..', '][', $key);
             }
 
+            if(substr($key,0,1) !== '[') {
+                $key = '[' . $key;
+            }
+
+            if(substr($key,-1,1) !== ']') {
+                $key .= ']';
+            }
+
+            if ($accessor->isReadable($container, $key)) {
+                return $accessor->getValue($container, $key);
+            }
             return isset($container[ $key ]) ? $container[ $key ] : $matches[0];
         };
-        $result   = preg_replace_callback('{%%|%\[?([a-zA-Z0-9_.]+)\]?%}', $callback, $value, -1, $count);
-
+        $result   = preg_replace_callback('{%%|%([a-zA-Z0-9_.\[\]]+)%}', $callback, $value, -1, $count);
         return $count ? $result : $value;
     }
 }

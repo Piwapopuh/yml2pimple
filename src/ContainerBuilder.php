@@ -68,7 +68,7 @@ class ContainerBuilder
      * @param \Pimple $container
      * @param array   $paths
      */
-    public function __construct(\Pimple $container, $paths = array())
+    public function __construct(\Pimple &$container, $paths = array())
     {
         $this->container  = $container;
         $this->locator    = new FileLocator($paths);
@@ -125,7 +125,7 @@ class ContainerBuilder
      *
      * @return $this
      */
-    public function configureServiceFactory(callable $callable)
+    public function configureServiceFactory(\Closure $callable)
     {
         $this->serviceFactoryConfigured = true;
         $callable($this->serviceFactory);

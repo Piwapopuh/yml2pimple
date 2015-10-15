@@ -21,12 +21,13 @@ abstract class AbstractFactory
 
         if (is_array($value)) {
             foreach ($value as $k => $v) {
-                $value[ $k ] = $this->normalize($v, $container);
+                $k = (string) $this->normalize($k, $container);
+                $v = $this->normalize($v, $container);
+                $value[ $k ] = $v;
             }
 
             return $value;
         }
-
         return $this->normalizer->normalize($value, $container);
     }
 
