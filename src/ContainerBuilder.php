@@ -81,7 +81,7 @@ class ContainerBuilder
      *
      * @return $this
      */
-    public function setCacheDir(string $cacheDir)
+    public function setCacheDir($cacheDir)
     {
         $this->cacheDir = $cacheDir;
 
