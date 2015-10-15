@@ -60,7 +60,7 @@ class PimpleNormalizer implements NormalizerInterface
             }
         }
 
-        if (preg_match('{^%([a-zA-Z0-9_.]+)%$}', $value, $match)) {
+        if (preg_match('{^%\[?([a-zA-Z0-9_.]+)\]?%$}', $value, $match)) {
             $key = strtolower($match[1]);
             if (false !== strpos($key, '..')) {
                 $key = '[' . str_replace('..', '][', $key) . ']';
@@ -79,7 +79,6 @@ class PimpleNormalizer implements NormalizerInterface
             if (!isset($matches[1])) {
                 return '%%';
             }
-
             $key = strtolower($matches[1]);
 
             if (false !== strpos($key, '..')) {
@@ -93,7 +92,7 @@ class PimpleNormalizer implements NormalizerInterface
 
             return isset($container[ $key ]) ? $container[ $key ] : $matches[0];
         };
-        $result   = preg_replace_callback('{%%|%([a-zA-Z0-9_.]+)%}', $callback, $value, -1, $count);
+        $result   = preg_replace_callback('{%%|%\[?([a-zA-Z0-9_.]+)\]?%}', $callback, $value, -1, $count);
 
         return $count ? $result : $value;
     }
