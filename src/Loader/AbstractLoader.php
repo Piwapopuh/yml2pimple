@@ -50,7 +50,7 @@ abstract class AbstractLoader extends FileLoader
 
             foreach ($imports as $import) {
                 $import = $import['resource'];
-                $this->setCurrentDir(dirname($import));
+                $this->setCurrentDir(dirname($resource));
                 $inherited = array_replace_recursive($inherited, $this->import($import, null, false, $resource));
             }
         }
