@@ -2,17 +2,8 @@
 
 namespace G\Yaml2Pimple\Normalizer;
 
-use \Symfony\Component\PropertyAccess\PropertyAccess;
-
 class PimpleNormalizer implements NormalizerInterface
 {
-    /** @var \Symfony\Component\PropertyAccess\PropertyAccessor */
-    private $accessor;
-
-    public function __construct()
-    {
-        $this->accessor = PropertyAccess::createPropertyAccessor();
-    }
 
     /**
      * @param $value
@@ -62,23 +53,18 @@ class PimpleNormalizer implements NormalizerInterface
 
         $accessor = $this->accessor;
 
-        if (preg_match('{^%([a-zA-Z0-9_.\[\]]+)%$}', $value, $match)) {
+        if (preg_match('{^%([a-zA-Z0-9_.]+)%$}', $value, $match)) {
             $key = strtolower($match[1]);
-
-            if (false !== strpos($key, '..')) {
-                $key = str_replace('..', '][', $key);
-            }
-
-            if(substr($key,0,1) !== '[') {
-                $key = '[' . $key;
-            }
-
-            if(substr($key,-1,1) !== ']') {
-                $key .= ']';
-            }
-
-            if ($accessor->isReadable($container, $key)) {
-                return $accessor->getValue($container, $key);
+            
+            if (preg_match('{(\.\.)}', $key, $test)) {
+                $keys = explode('..', $key);
+                $element = $container;
+                while ($key = array_shift($keys)) {
+                    if( isset($element[$key])) {
+                        $element = $element[$key];
+                    }
+                }
+                return $element;
             }
 
             return isset($container[ $key ]) ? $container[ $key ] : $match[0];
@@ -91,25 +77,19 @@ class PimpleNormalizer implements NormalizerInterface
             }
 
             $key = strtolower($matches[1]);
-
-            if (false !== strpos($key, '..')) {
-                $key = str_replace('..', '][', $key);
-            }
-
-            if(substr($key,0,1) !== '[') {
-                $key = '[' . $key;
-            }
-
-            if(substr($key,-1,1) !== ']') {
-                $key .= ']';
-            }
-
-            if ($accessor->isReadable($container, $key)) {
-                return $accessor->getValue($container, $key);
+            if (preg_match('{(\.\.)}', $key, $test)) {
+                $keys = explode('..', $key);
+                $element = $container;
+                while ($key = array_shift($keys)) {
+                    if( isset($element[$key])) {
+                        $element = $element[$key];
+                    }
+                }
+                return $element;
             }
             return isset($container[ $key ]) ? $container[ $key ] : $matches[0];
         };
-        $result   = preg_replace_callback('{%%|%([a-zA-Z0-9_.\[\]]+)%}', $callback, $value, -1, $count);
+        $result   = preg_replace_callback('{%%|%([a-zA-Z0-9_.]+)%}', $callback, $value, -1, $count);
         return $count ? $result : $value;
     }
 }
