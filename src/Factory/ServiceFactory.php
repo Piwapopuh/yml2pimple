@@ -17,6 +17,7 @@ class ServiceFactory extends AbstractServiceFactory
     /** @var  array $tagHandlers */
     protected $tagHandlers;
 
+    private $shared = array();
     /**
      * @param ServiceProxyInterface $proxyFactory
      * @param array                 $tagHandlers
@@ -49,15 +50,24 @@ class ServiceFactory extends AbstractServiceFactory
 
         if (!$serviceConf->isSynthetic()) {
             // we dont know how to create a synthetic service, its set later
-            // the classname can be a parameter reference
+            // the class name can be a parameter reference
             $serviceConf->setClass($this->normalize($serviceConf->getClass(), $container));
 
             $that          = $this;
             $aspectFactory = $this->aspectFactory;
+            $shared        = $this->shared;
 
             // the instantiator closure function
-            $factoryFunction = function ($c) use ($that, $serviceConf, $aspectFactory) {
+            $factoryFunction = function ($c) use ($that, $serviceConf, $aspectFactory, &$shared) {
+
+                $serviceName = $serviceConf->getName();
+
+                if (!empty($shared[ $serviceName ])) {
+                    return $shared[ $serviceName ];
+                }
+
                 $instance = $that->createInstance($serviceConf, $c);
+
                 // add aspects
                 if (null !== $aspectFactory && $serviceConf->hasAspects()) {
                     $instance = $that->addAspects($serviceConf->getAspects(), $instance, $c);
@@ -71,6 +81,11 @@ class ServiceFactory extends AbstractServiceFactory
                 // let another object modify this instance
                 if ($serviceConf->hasConfigurators()) {
                     $instance = $that->addConfigurators($serviceConf->getConfigurators(), $instance, $c);
+                }
+
+                // if the service is a shared instance we save it for later use, this is default
+                if (true === $serviceConf->isShared()) {
+                    $shared[ $serviceName ] = $instance;
                 }
 
                 return $instance;
@@ -87,15 +102,6 @@ class ServiceFactory extends AbstractServiceFactory
             // create a lazy proxy
             if (null !== $this->proxyFactory && $serviceConf->isLazy()) {
                 $factoryFunction = $this->proxyFactory->createProxy($serviceConf->getClass(), $factoryFunction);
-            }
-
-            /**
-             * By default, each time you get a service, Pimple v1.x returns a
-             * new instance of it. If you want the same instance to be returned
-             * for all calls, wrap your anonymous function with the share() method
-             **/
-            if ('container' === strtolower($serviceConf->getScope())) {
-                $factoryFunction = $container->share($factoryFunction);
             }
         }
 

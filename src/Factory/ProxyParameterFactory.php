@@ -7,8 +7,7 @@ use \G\Yaml2Pimple\Proxy\ParameterProxyAdapter;
 class ProxyParameterFactory extends AbstractParameterFactory
 {
     protected $proxyFactory;
-    protected $nestedLevel;
-    protected $maxNestedLevel;
+    private   $frozen = array();
 
     public function __construct($proxyFactory = null)
     {
@@ -16,23 +15,6 @@ class ProxyParameterFactory extends AbstractParameterFactory
         if (null === $proxyFactory) {
             $this->proxyFactory = new ParameterProxyAdapter();
         }
-        $this->nestedLevel    = array();
-        $this->maxNestedLevel = 50;
-    }
-
-    public function setMaxNestedLevel($maxNestedLevel)
-    {
-        $this->maxNestedLevel = $maxNestedLevel;
-    }
-
-    public function getNestedLevel($name)
-    {
-        return isset($this->nestedLevel[ $name ]) ? $this->nestedLevel[ $name ] : 0;
-    }
-
-    public function setNestedLevel($name, $nestedLevel)
-    {
-        $this->nestedLevel[ $name ] = $nestedLevel;
     }
 
     public function create(Parameter $parameterConf, \Pimple $container)
@@ -45,41 +27,40 @@ class ProxyParameterFactory extends AbstractParameterFactory
         // parameters as references which could be set later
         // the value is evaluated on every access
         $that  = $this;
+        $frozen = $this->frozen;
+
+        $old = null;
+        if (isset($container[ $parameterName ])) {
+            $old = $container[ $parameterName ];
+        }
+
         $value = $this->proxyFactory->createProxy(
-            function ($c) use ($that, $parameterValue) {
+            function ($c) use ($that, $parameterConf, $parameterValue, $old, &$frozen) {
+
+                $parameterName  = $parameterConf->getParameterName();
+
+                if (!empty($frozen[ $parameterName ])) {
+                    return $frozen[ $parameterName ];
+                }
+
                 $parameterValue = $that->normalize($parameterValue, $c);
+
+                if (null !== $old && $parameterConf->mergeExisting()) {
+                    // extract the value if it is a callable
+                    if (is_object($old) && is_callable($old)&& method_exists($old, '__invoke')) {
+                        $old = $old($c);
+                    }
+                    $parameterValue = call_user_func($parameterConf->getMergeStrategy(), $old, $parameterValue);
+                }
+
+                // freeze our value on first access (as singleton) this is default
+                if ($parameterConf->isFrozen()) {
+                    $frozen[ $parameterName ] = $parameterValue;
+                }
 
                 return $parameterValue;
             }
         );
-
-        $nestedLevel = $this->getNestedLevel($parameterName);
-        // merge existing data per default
-        if ($nestedLevel < $this->maxNestedLevel && isset($container[ $parameterName ]) && $parameterConf->mergeExisting()) {
-            try {
-                // avoid too deep nested level closures
-                $this->setNestedLevel($parameterName, $nestedLevel + 1);
-                // create a wrapper function for lazy calling
-                $value = $container->extend(
-                    $parameterName,
-                    function ($old, $c) use ($value, $parameterConf) {
-                        // extract the value from our LazyParameterFactory
-                        if (is_object($value) && method_exists($value, '__invoke')) {
-                            $value = $value($c);
-                        }
-
-                        // merge existing data with new
-                        return call_user_func($parameterConf->getMergeStrategy(), $old, $value);
-                    }
-                );
-            } catch(\InvalidArgumentException $e) {
-            }
-        }
-
-        // freeze our value on first access (as singleton) this is default
-        if ($parameterConf->isFrozen()) {
-            $value = $container->share($value);
-        }
 
         $container[ $parameterName ] = $value;
 

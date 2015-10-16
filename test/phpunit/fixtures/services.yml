@@ -6,6 +6,15 @@ services:
     class:     \test\fixtures\App
     arguments: [@Proxy, %name%]
 
+  shared:
+    class:     \test\fixtures\App
+    arguments: [@Proxy, %name%]
+
+  not_shared:
+    class:     \test\fixtures\App
+    arguments: [@Proxy, %name%]
+    scope:     prototype
+
   Proxy:
     class:     \test\fixtures\Proxy
     arguments: [@Curl]

@@ -178,6 +178,11 @@ class Definition
         return $this->scope;
     }
 
+    public function isShared()
+    {
+        return ('container' === strtolower($this->getScope()));
+    }
+
     public function setLazy($lazy)
     {
         $this->lazy = $lazy;
