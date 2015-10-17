@@ -51,8 +51,6 @@ class PimpleNormalizer implements NormalizerInterface
             }
         }
 
-        $accessor = $this->accessor;
-
         if (preg_match('{^%([a-zA-Z0-9_.]+)%$}', $value, $match)) {
             $key = strtolower($match[1]);
             
@@ -71,7 +69,7 @@ class PimpleNormalizer implements NormalizerInterface
         }
 
 
-        $callback = function ($matches) use ($container, $accessor) {
+        $callback = function ($matches) use ($container) {
             if (!isset($matches[1])) {
                 return '%%';
             }

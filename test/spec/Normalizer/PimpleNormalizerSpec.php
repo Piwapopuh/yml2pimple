@@ -48,14 +48,6 @@ class PimpleNormalizerSpec extends ObjectBehavior
         $this->normalize('%foo%', $container)->shouldReturn('bar');
     }
 
-    public function it_can_normalize_simple_parameters_with_brackets(\Pimple $container)
-    {
-        $container->offsetExists('foo')->willReturn(true);
-        $container->offsetGet('foo')->willReturn('bar');
-
-        $this->normalize('%[foo]%', $container)->shouldReturn('bar');
-    }
-
     public function it_can_normalize_multiple_parameters_in_a_string(\Pimple $container)
     {
         $container->offsetExists('foo')->willReturn(true);
@@ -64,9 +56,6 @@ class PimpleNormalizerSpec extends ObjectBehavior
         $container->offsetExists('bar')->willReturn(true);
         $container->offsetGet('bar')->willReturn('World');
 
-        $this->normalize('%foo% %[bar]%', $container)->shouldReturn('Hello World');
-        $this->normalize('%[foo]% %[bar]%', $container)->shouldReturn('Hello World');
-        $this->normalize('%[foo]% %[bar]%', $container)->shouldReturn('Hello World');
         $this->normalize('%foo% %bar%', $container)->shouldReturn('Hello World');
     }
 
@@ -76,6 +65,5 @@ class PimpleNormalizerSpec extends ObjectBehavior
         $container->offsetGet('foo')->willReturn(array('bar' => 'Hello World'));
 
         $this->normalize('%foo..bar%', $container)->shouldBe('Hello World');
-        $this->normalize('%[foo][bar]%', $container)->shouldBe('Hello World');
     }
 }
