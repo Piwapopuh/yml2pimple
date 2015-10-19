@@ -29,11 +29,6 @@ class Parameter
     {
         if (is_array($parameterValue)) {
             $mergeExisting = true;
-            $this->mergeStrategy = 'array_replace_recursive';
-            if (isset($parameterValue[0]) && '...' === $parameterValue[0]) {
-                array_shift($parameterValue);
-                $this->mergeStrategy = 'array_merge_recursive';
-            }
         }
 
         // freeze our value on first access (as singleton)
@@ -96,8 +91,18 @@ class Parameter
         return $this->mergeExisting;
     }
 
-    public function getMergeStrategy()
+    public function getMergeStrategy($old = null)
     {
+        $this->mergeStrategy = 'array_merge_recursive';
+
+        if (is_array($this->parameterValue) && $this->isAssoc($this->parameterValue)) {
+            $this->mergeStrategy = 'array_replace_recursive';
+        }
+
+        if (is_array($old) && $this->isAssoc($old)) {
+            $this->mergeStrategy = 'array_replace_recursive';
+        }
+
         return $this->mergeStrategy;
     }
 
@@ -114,5 +119,10 @@ class Parameter
         $obj->initialize($array);
 
         return $obj;
+    }
+
+    private function isAssoc($array)
+    {
+        return ($array !== array_values($array));
     }
 }
