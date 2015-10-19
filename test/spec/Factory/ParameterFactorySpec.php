@@ -28,7 +28,7 @@ class ParameterFactorySpec extends ObjectBehavior
     {
         $parameterConf->getParameterName()->willReturn('db.options');
         $parameterConf->getParameterValue()->willReturn(array('host' => 'example.org'));
-        $parameterConf->getMergeStrategy()->willReturn('array_replace_recursive');
+        $parameterConf->getMergeStrategy(Argument::type('array'))->willReturn('array_replace_recursive');
         $parameterConf->mergeExisting()->willReturn(true);
 
         $container->offsetExists('db.options')->willReturn(true);

@@ -13,7 +13,8 @@ class ParameterFactory extends AbstractParameterFactory
         $value = $this->normalize($parameterValue, $container);
 
         if ($parameterConf->mergeExisting() && isset($container[ $parameterName ])) {
-            $value = call_user_func($parameterConf->getMergeStrategy(), $container[ $parameterName ], $value);
+            $old = $container[ $parameterName ];
+            $value = call_user_func($parameterConf->getMergeStrategy($old), $old, $value);
         }
 
         $container[ $parameterName ] = $value;
