@@ -53,13 +53,15 @@ class PimpleNormalizer implements NormalizerInterface
 
         if (preg_match('{^%([a-zA-Z0-9_.]+)%$}', $value, $match)) {
             $key = strtolower($match[1]);
-            
+
             if (preg_match('{(\.\.)}', $key, $test)) {
                 $keys = explode('..', $key);
                 $element = $container;
                 while ($key = array_shift($keys)) {
                     if( isset($element[$key])) {
                         $element = $element[$key];
+                    } else {
+                        throw new \RuntimeException('undefined key ' . $key);
                     }
                 }
                 return $element;
@@ -81,6 +83,8 @@ class PimpleNormalizer implements NormalizerInterface
                 while ($key = array_shift($keys)) {
                     if( isset($element[$key])) {
                         $element = $element[$key];
+                    } else {
+                        throw new \RuntimeException('undefined key ' . $key);
                     }
                 }
                 return $element;

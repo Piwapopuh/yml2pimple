@@ -43,7 +43,20 @@ class ProxyParameterFactory extends AbstractParameterFactory
                     return $frozen[ $parameterName ];
                 }
 
-                $parameterValue = $that->normalize($parameterValue, $c);
+                if (is_array($parameterValue)) {
+                    $parameterValue = $that->normalize($parameterValue, $c, $parameterName);
+                    do {
+                        $old = $parameterValue;
+                        $parameterValue = json_decode(str_replace('@', '@@', json_encode($parameterValue)), true);
+                        $parameterValue = $that->normalize(
+                            $parameterValue,
+                            new \Pimple(array($parameterName => $parameterValue))
+                        );
+                        $parameterValue = json_decode(str_replace('@@', '@', json_encode($parameterValue)), true);
+                    } while($old != $parameterValue);
+                } else {
+                    $parameterValue = $that->normalize($parameterValue, $c);
+                }
 
                 if (null !== $old && $parameterConf->mergeExisting()) {
                     // extract the value if it is a callable

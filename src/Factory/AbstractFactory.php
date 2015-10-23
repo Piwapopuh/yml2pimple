@@ -15,23 +15,27 @@ abstract class AbstractFactory
         return $this;
     }
 
-    public function normalize($value, \Pimple $container)
+    public function normalize($value, \Pimple $container, $skip = null)
     {
         if (null === $this->normalizer) {
             return $value;
         }
 
         if (is_array($value)) {
+            $result = array();
             foreach ($value as $k => $v) {
-                $k = (string) $this->normalize($k, $container);
-                $v = $this->normalize($v, $container);
-                $value[ $k ] = $v;
+                $k = (string) $this->normalize($k, $container, $skip);
+                $v = $this->normalize($v, $container, $skip);
+                $result[ $k ] = $v;
             }
 
-            return $value;
+            return $result;
         }
 
         if (is_string($value)) {
+            if (null !== $skip && false !== strpos($value, '%'.$skip)) {
+                return $value;
+            }
             return $this->normalizer->normalize($value, $container);
         }
 
