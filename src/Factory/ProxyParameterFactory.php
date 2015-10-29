@@ -44,16 +44,9 @@ class ProxyParameterFactory extends AbstractParameterFactory
                 }
 
                 if (is_array($parameterValue)) {
-                    $parameterValue = $that->normalize($parameterValue, $c, $parameterName);
-                    do {
-                        $old = $parameterValue;
-                        $parameterValue = json_decode(str_replace('@', '@@', json_encode($parameterValue)), true);
-                        $parameterValue = $that->normalize(
-                            $parameterValue,
-                            new \Pimple(array($parameterName => $parameterValue))
-                        );
-                        $parameterValue = json_decode(str_replace('@@', '@', json_encode($parameterValue)), true);
-                    } while($old != $parameterValue);
+                    $c['self'] = $parameterValue;
+                    $parameterValue = $that->normalize($parameterValue, $c);
+                    unset($c['self']);
                 } else {
                     $parameterValue = $that->normalize($parameterValue, $c);
                 }
