@@ -27,11 +27,11 @@
     "require": {
         "php": ">=5.3.3",
         "pimple/pimple": "~1.0",
-        "symfony/config": "v2.6.0",
-		"symfony/yaml": "v2.6.0",
-		"symfony/property-access": "v2.6.0",
-		"symfony/stopwatch": "v2.6.0",
-		"symfony/expression-language": "v2.6.0",
+        "symfony/config": "~2.6",
+		"symfony/yaml": "~2.6",
+		"symfony/property-access": "~2.6",
+		"symfony/stopwatch": "~2.6",
+		"symfony/expression-language": "~2.6",
 		"ocramius/proxy-manager": "1.0.*",
         "jms/cg": "1.1.*",
 		"td7650/superclosure": "dev-master"
